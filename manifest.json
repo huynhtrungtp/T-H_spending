@@ -1,6 +1,6 @@
 {
-  "name": "SnapDay",
-  "short_name": "SnapDay",
+  "name": "T&H Spending",
+  "short_name": "T&H Spending",
   "description": "Chụp ảnh và lưu kỷ niệm mỗi ngày",
   "start_url": "/",
   "display": "standalone",
