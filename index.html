@@ -108,6 +108,29 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .nav-label{font-size:10px;color:var(--text3);transition:color .15s}
 .nav-label.active{color:var(--accent)}
 .nav-cam-btn{width:50px;height:50px;border-radius:17px;background:linear-gradient(135deg,#0284c7,#a855f7);display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-12px;box-shadow:0 4px 16px rgba(2,132,199,0.35)}
+/* CALENDAR POPUP */
+.cal-modal{position:fixed;inset:0;z-index:300;background:rgba(7,89,133,0.35);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+.cal-modal.open{display:flex}
+.cal-sheet{background:var(--surface);width:100%;max-width:440px;border-radius:24px 24px 0 0;padding:18px 18px calc(var(--safe-bottom) + 18px);animation:calUp .22s ease}
+@keyframes calUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav-btn{width:32px;height:32px;border-radius:50%;border:none;background:var(--accent-dim);color:var(--accent);font-size:17px;cursor:pointer;font-family:inherit;line-height:1}
+.cal-title{font-size:15px;font-weight:600;color:var(--text)}
+.cal-streak-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:14px;padding:10px 14px;margin-bottom:14px}
+.cal-streak-fire{font-size:20px}
+.cal-streak-text{font-size:13px;color:var(--text2)}
+.cal-streak-text strong{color:var(--accent);font-size:16px}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text3);margin-bottom:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:12px;color:var(--text2)}
+.cal-day.empty{visibility:hidden}
+.cal-day.has-photo{background:var(--accent-dim);color:var(--text);font-weight:600}
+.cal-day.streak-day{background:linear-gradient(135deg,#0284c7,#a855f7);color:#fff;font-weight:700}
+.cal-day.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cal-actions{display:flex;gap:10px;margin-top:16px}
+.cal-view-btn{flex:1;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.cal-close-btn{padding:12px 18px;border-radius:12px;border:none;background:var(--surface2);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.nav-icon svg{display:block}
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,35,0.95);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;backdrop-filter:blur(12px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -153,8 +176,18 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   <div class="screen" id="s-gallery"></div>
 
   <div class="bottom-nav">
-    <div class="nav-item" onclick="switchTab('gallery')">
-      <div class="nav-icon" id="nav-gallery">🗓</div>
+    <div class="nav-item" onclick="openCalendarPopup()">
+      <div class="nav-icon" id="nav-gallery">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="4"></rect>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <line x1="8" y1="2.5" x2="8" y2="6.5"></line>
+          <line x1="16" y1="2.5" x2="16" y2="6.5"></line>
+          <circle cx="8" cy="14.5" r="1.3" fill="currentColor" stroke="none"></circle>
+          <circle cx="12" cy="14.5" r="1.3" fill="currentColor" stroke="none"></circle>
+          <circle cx="16" cy="14.5" r="1.3" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </div>
       <div class="nav-label" id="navl-gallery">Nhật ký</div>
     </div>
     <div class="nav-item" onclick="switchTab('camera')">
@@ -163,6 +196,26 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     <div class="nav-item" onclick="showStreakInfo()">
       <div class="nav-icon" id="nav-streak">🔥</div>
       <div class="nav-label" id="navl-streak">Streak</div>
+    </div>
+  </div>
+</div>
+
+<div id="calendar-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="changeCalMonth(-1)">‹</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav-btn" onclick="changeCalMonth(1)">›</button>
+    </div>
+    <div class="cal-streak-row">
+      <div class="cal-streak-fire">🔥</div>
+      <div class="cal-streak-text"><strong id="cal-streak-num">0</strong> ngày liên tiếp</div>
+    </div>
+    <div class="cal-weekdays"><span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-actions">
+      <button class="cal-view-btn" onclick="goToGalleryFromCal()">Xem nhật ký đầy đủ</button>
+      <button class="cal-close-btn" onclick="closeCalendarPopup()">Đóng</button>
     </div>
   </div>
 </div>
@@ -440,6 +493,72 @@ function showStreakInfo(){
   const total=photos.length;
   const days=new Set(photos.map(p=>p.date)).size;
   showToast(`🔥 ${streak} ngày · 📷 ${total} ảnh · 📅 ${days} ngày có ảnh`);
+}
+
+let calMonthOffset=0;
+function openCalendarPopup(){
+  calMonthOffset=0;
+  renderCalendar();
+  document.getElementById('calendar-modal').classList.add('open');
+}
+function closeCalendarPopup(){
+  document.getElementById('calendar-modal').classList.remove('open');
+}
+function changeCalMonth(delta){
+  calMonthOffset+=delta;
+  renderCalendar();
+}
+function goToGalleryFromCal(){
+  closeCalendarPopup();
+  switchTab('gallery');
+}
+
+function getStreakDates(){
+  const streakDates=new Set();
+  if(!photos.length)return streakDates;
+  const dates=[...new Set(photos.map(p=>p.date))].sort().reverse();
+  const today=toDateStr(new Date());
+  const yesterday=toDateStr(new Date(Date.now()-86400000));
+  if(dates[0]!==today&&dates[0]!==yesterday)return streakDates;
+  let check=dates[0]===today?today:yesterday;
+  for(const d of dates){
+    if(d===check){
+      streakDates.add(d);
+      const prev=new Date(check+'T00:00:00');prev.setDate(prev.getDate()-1);
+      check=toDateStr(prev);
+    }else if(d<check)break;
+  }
+  return streakDates;
+}
+
+function renderCalendar(){
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+calMonthOffset,1);
+  const year=base.getFullYear(),month=base.getMonth();
+  const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  document.getElementById('cal-title').textContent=`${monthNames[month]} ${year}`;
+
+  const streak=calcStreak();
+  document.getElementById('cal-streak-num').textContent=streak;
+
+  const photoDates=new Set(photos.map(p=>p.date));
+  const streakDates=getStreakDates();
+  const todayStr=toDateStr(new Date());
+
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+
+  let html='';
+  for(let i=0;i<firstDay;i++)html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let cls='cal-day';
+    if(dateStr===todayStr)cls+=' today';
+    if(streakDates.has(dateStr))cls+=' streak-day';
+    else if(photoDates.has(dateStr))cls+=' has-photo';
+    html+=`<div class="${cls}">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
 }
 
 function switchTab(tab){
