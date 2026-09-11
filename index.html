@@ -8,19 +8,22 @@
 <meta name="apple-mobile-web-app-title" content="T&H Spending">
 <meta name="theme-color" content="#0D0D0F">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>T&H Spending</title>
 <style>
-:root{--bg:#0D0D0F;--surface:#1A1A1F;--surface2:#222228;--border:#2A2A2E;--accent:#FF6B35;--accent-dim:rgba(255,107,53,0.18);--text:#FFFFFF;--text2:#888;--text3:#444;--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
+:root{--bg:#f0f9ff;--surface:#ffffff;--surface2:#e0f2fe;--border:#bae6fd;--accent:#0284c7;--accent-dim:rgba(2,132,199,0.14);--text:#075985;--text2:#0369a1;--text3:#7dd3fc;--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display',sans-serif;overflow:hidden;position:fixed}
+html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#f3e8ff 100%);color:var(--text);font-family:'Be Vietnam Pro',-apple-system,sans-serif;overflow:hidden;position:fixed}
 #app{width:100%;height:100%;display:flex;flex-direction:column}
-.topbar{padding:calc(var(--safe-top) + 6px) 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg)}
-.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px}
-.logo span{color:var(--accent)}
+.topbar{padding:calc(var(--safe-top) + 6px) 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:transparent}
+.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#075985 0%,#0369a1 40%,#7e22ce 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo span{background:linear-gradient(135deg,#0369a1 0%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .top-right{display:flex;gap:10px}
 .icon-btn{width:36px;height:36px;border-radius:50%;background:var(--surface);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--text)}
-.tabbar{display:flex;padding:0 20px;flex-shrink:0;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.tabbar{display:flex;padding:0 20px;flex-shrink:0;border-bottom:0.5px solid var(--border);background:transparent}
 .tab{font-size:14px;font-weight:500;color:var(--text3);padding:8px 16px 8px 0;cursor:pointer;position:relative;transition:color .2s}
 .tab.active{color:var(--text)}
 .tab.active::after{content:'';position:absolute;bottom:-0.5px;left:0;width:calc(100% - 16px);height:2px;background:var(--accent);border-radius:2px}
@@ -40,7 +43,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #caption-input::placeholder{color:rgba(255,255,255,0.35)}
 .zoom-row{display:flex;justify-content:center;gap:6px}
 .zoom-pill{background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 11px;font-size:12px;color:rgba(255,255,255,0.55);font-weight:500;cursor:pointer;backdrop-filter:blur(4px);transition:all .15s}
-.zoom-pill.active{color:var(--accent);border-color:rgba(255,107,53,0.5)}
+.zoom-pill.active{color:var(--accent);border-color:rgba(2,132,199,0.5)}
 .shutter-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 0;flex-shrink:0}
 .thumb-preview{width:48px;height:48px;border-radius:12px;border:2px solid var(--border);background:var(--surface);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3)}
 .thumb-preview img{width:100%;height:100%;object-fit:cover}
@@ -98,13 +101,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .va-btn.delete{background:rgba(255,59,48,0.15);color:#FF3B30}
 .va-btn.share{background:var(--accent-dim);color:var(--accent)}
 /* NAV */
-.bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:var(--bg);border-top:0.5px solid var(--border);flex-shrink:0}
+.bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
 .nav-icon{font-size:22px;color:var(--text3);transition:color .15s}
 .nav-icon.active{color:var(--accent)}
 .nav-label{font-size:10px;color:var(--text3);transition:color .15s}
 .nav-label.active{color:var(--accent)}
-.nav-cam-btn{width:50px;height:50px;border-radius:17px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-12px;box-shadow:0 4px 16px rgba(255,107,53,0.35)}
+.nav-cam-btn{width:50px;height:50px;border-radius:17px;background:linear-gradient(135deg,#0284c7,#a855f7);display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-12px;box-shadow:0 4px 16px rgba(2,132,199,0.35)}
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,35,0.95);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;backdrop-filter:blur(12px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -119,7 +122,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="flash"></div>
 <div id="app">
   <div class="topbar">
-    <div class="logo">T&H <span>Spending</span></div>
+    <div class="logo">T&amp;H<span>Spending</span></div>
     <div class="top-right">
       <button class="icon-btn" onclick="exportPhotos()">💾</button>
     </div>
@@ -186,7 +189,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
-const STORAGE_KEY='t-h-spending_v2';
+const STORAGE_KEY='snapday_v2';
 
 function savePhotos(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(photos))}catch(e){}}
 function loadPhotos(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)photos=JSON.parse(r)}catch(e){photos=[]}}
@@ -416,12 +419,12 @@ function sharePhoto(){
   const p=photos.find(x=>x.id===currentViewerId);if(!p)return;
   if(navigator.share){
     fetch(p.dataUrl).then(r=>r.blob()).then(blob=>{
-      const file=new File([blob],'t-h-spending.jpg',{type:'image/jpeg'});
+      const file=new File([blob],'snapday.jpg',{type:'image/jpeg'});
       navigator.share({files:[file],title:'T&H Spending'}).catch(()=>{});
     });
   }else{
     const a=document.createElement('a');a.href=p.dataUrl;
-    a.download=`t-h-spending_${p.date}_${p.time.replace(':','')}.jpg`;a.click();
+    a.download=`snapday_${p.date}_${p.time.replace(':','')}.jpg`;a.click();
     showToast('Đang tải xuống…');
   }
 }
@@ -429,7 +432,7 @@ function sharePhoto(){
 function exportPhotos(){
   if(!photos.length){showToast('Chưa có ảnh');return;}
   showToast(`Đang xuất ${photos.length} ảnh…`);
-  photos.forEach((p,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=p.dataUrl;a.download=`t-h-spending_${p.date}_${p.time.replace(':','')}.jpg`;a.click();},i*400));
+  photos.forEach((p,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=p.dataUrl;a.download=`snapday_${p.date}_${p.time.replace(':','')}.jpg`;a.click();},i*400));
 }
 
 function showStreakInfo(){
