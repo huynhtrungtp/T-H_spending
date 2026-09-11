@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SnapDay">
+<meta name="apple-mobile-web-app-title" content="T&H Spending">
 <meta name="theme-color" content="#0D0D0F">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>SnapDay</title>
+<title>T&H Spending</title>
 <style>
 :root{--bg:#0D0D0F;--surface:#1A1A1F;--surface2:#222228;--border:#2A2A2E;--accent:#FF6B35;--accent-dim:rgba(255,107,53,0.18);--text:#FFFFFF;--text2:#888;--text3:#444;--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -119,7 +119,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 <div id="flash"></div>
 <div id="app">
   <div class="topbar">
-    <div class="logo">snap<span>day</span></div>
+    <div class="logo">T&H <span>Spending</span></div>
     <div class="top-right">
       <button class="icon-btn" onclick="exportPhotos()">💾</button>
     </div>
@@ -186,7 +186,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
-const STORAGE_KEY='snapday_v2';
+const STORAGE_KEY='t-h-spending_v2';
 
 function savePhotos(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(photos))}catch(e){}}
 function loadPhotos(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)photos=JSON.parse(r)}catch(e){photos=[]}}
@@ -416,12 +416,12 @@ function sharePhoto(){
   const p=photos.find(x=>x.id===currentViewerId);if(!p)return;
   if(navigator.share){
     fetch(p.dataUrl).then(r=>r.blob()).then(blob=>{
-      const file=new File([blob],'snapday.jpg',{type:'image/jpeg'});
-      navigator.share({files:[file],title:'SnapDay'}).catch(()=>{});
+      const file=new File([blob],'t-h-spending.jpg',{type:'image/jpeg'});
+      navigator.share({files:[file],title:'T&H Spending'}).catch(()=>{});
     });
   }else{
     const a=document.createElement('a');a.href=p.dataUrl;
-    a.download=`snapday_${p.date}_${p.time.replace(':','')}.jpg`;a.click();
+    a.download=`t-h-spending_${p.date}_${p.time.replace(':','')}.jpg`;a.click();
     showToast('Đang tải xuống…');
   }
 }
@@ -429,7 +429,7 @@ function sharePhoto(){
 function exportPhotos(){
   if(!photos.length){showToast('Chưa có ảnh');return;}
   showToast(`Đang xuất ${photos.length} ảnh…`);
-  photos.forEach((p,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=p.dataUrl;a.download=`snapday_${p.date}_${p.time.replace(':','')}.jpg`;a.click();},i*400));
+  photos.forEach((p,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=p.dataUrl;a.download=`t-h-spending_${p.date}_${p.time.replace(':','')}.jpg`;a.click();},i*400));
 }
 
 function showStreakInfo(){
