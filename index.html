@@ -121,12 +121,23 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cal-streak-text{font-size:13px;color:var(--text2)}
 .cal-streak-text strong{color:var(--accent);font-size:16px}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--text3);margin-bottom:6px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:12px;color:var(--text2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-day{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;gap:3px}
 .cal-day.empty{visibility:hidden}
-.cal-day.has-photo{background:var(--accent-dim);color:var(--text);font-weight:600}
-.cal-day.streak-day{background:linear-gradient(135deg,#0284c7,#a855f7);color:#fff;font-weight:700}
-.cal-day.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cal-day-num{font-size:11px;color:var(--text2);width:18px;height:18px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cal-day.today .cal-day-num{box-shadow:inset 0 0 0 1.5px var(--accent);font-weight:700;color:var(--text)}
+.cal-day.has-photo .cal-day-num{background:var(--accent-dim);color:var(--accent);font-weight:600}
+.cal-day.streak-day .cal-day-num{background:linear-gradient(135deg,#0284c7,#a855f7);color:#fff;font-weight:700}
+.cal-day-thumb-wrap{width:100%;flex:1;min-height:0;border-radius:7px;overflow:hidden;background:var(--surface2)}
+.cal-day-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.cal-day.has-photo,.cal-day.streak-day{cursor:pointer}
+.cal-day.selected .cal-day-thumb-wrap{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal-day-photos{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.cal-day-photos.show{max-height:220px;margin-top:14px}
+.cal-day-photos-header{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
+.cal-day-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:180px;overflow-y:auto}
+.cal-day-thumb{aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;background:var(--surface2)}
+.cal-day-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .cal-actions{display:flex;gap:10px;margin-top:16px}
 .cal-view-btn{flex:1;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .cal-close-btn{padding:12px 18px;border-radius:12px;border:none;background:var(--surface2);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
@@ -213,6 +224,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     </div>
     <div class="cal-weekdays"><span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
     <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-day-photos" id="cal-day-photos"></div>
     <div class="cal-actions">
       <button class="cal-view-btn" onclick="goToGalleryFromCal()">Xem nhật ký đầy đủ</button>
       <button class="cal-close-btn" onclick="closeCalendarPopup()">Đóng</button>
@@ -495,9 +507,10 @@ function showStreakInfo(){
   showToast(`🔥 ${streak} ngày · 📷 ${total} ảnh · 📅 ${days} ngày có ảnh`);
 }
 
-let calMonthOffset=0;
+let calMonthOffset=0,selectedCalDate=null;
 function openCalendarPopup(){
   calMonthOffset=0;
+  selectedCalDate=null;
   renderCalendar();
   document.getElementById('calendar-modal').classList.add('open');
 }
@@ -506,6 +519,7 @@ function closeCalendarPopup(){
 }
 function changeCalMonth(delta){
   calMonthOffset+=delta;
+  selectedCalDate=null;
   renderCalendar();
 }
 function goToGalleryFromCal(){
@@ -552,13 +566,45 @@ function renderCalendar(){
   for(let i=0;i<firstDay;i++)html+='<div class="cal-day empty"></div>';
   for(let d=1;d<=daysInMonth;d++){
     const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasPhoto=photoDates.has(dateStr);
+    const isStreak=streakDates.has(dateStr);
     let cls='cal-day';
     if(dateStr===todayStr)cls+=' today';
-    if(streakDates.has(dateStr))cls+=' streak-day';
-    else if(photoDates.has(dateStr))cls+=' has-photo';
-    html+=`<div class="${cls}">${d}</div>`;
+    if(isStreak)cls+=' streak-day';
+    else if(hasPhoto)cls+=' has-photo';
+    if(selectedCalDate===dateStr)cls+=' selected';
+    const clickAttr=hasPhoto?` onclick="selectCalDay('${dateStr}')"`:'';
+    let thumb='<div class="cal-day-thumb-wrap"></div>';
+    if(hasPhoto){
+      const dayPhoto=photos.find(p=>p.date===dateStr);
+      thumb=`<div class="cal-day-thumb-wrap"><img src="${dayPhoto.dataUrl}" alt="" loading="lazy"></div>`;
+    }
+    html+=`<div class="${cls}"${clickAttr}><div class="cal-day-num">${d}</div>${thumb}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
+  renderCalDayPhotos();
+}
+
+function selectCalDay(dateStr){
+  selectedCalDate=selectedCalDate===dateStr?null:dateStr;
+  renderCalendar();
+}
+
+function renderCalDayPhotos(){
+  const el=document.getElementById('cal-day-photos');
+  if(!selectedCalDate){el.classList.remove('show');el.innerHTML='';return;}
+  const dayPhotos=photos.filter(p=>p.date===selectedCalDate);
+  if(!dayPhotos.length){el.classList.remove('show');el.innerHTML='';return;}
+  const d=new Date(selectedCalDate+'T00:00:00');
+  const label=`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  const thumbs=dayPhotos.map(p=>`<div class="cal-day-thumb" onclick="openPhotoFromCal('${p.id}')"><img src="${p.dataUrl}" alt="" loading="lazy"></div>`).join('');
+  el.innerHTML=`<div class="cal-day-photos-header">${label} · ${dayPhotos.length} ảnh</div><div class="cal-day-thumbs">${thumbs}</div>`;
+  el.classList.add('show');
+}
+
+function openPhotoFromCal(id){
+  closeCalendarPopup();
+  openViewer(id);
 }
 
 function switchTab(tab){
