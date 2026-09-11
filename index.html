@@ -142,6 +142,34 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cal-view-btn{flex:1;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .cal-close-btn{padding:12px 18px;border-radius:12px;border:none;background:var(--surface2);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .nav-icon svg{display:block}
+/* LOGIN */
+.login-screen{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#f3e8ff 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+.login-screen.hide{display:none}
+.login-card{background:var(--surface);border-radius:24px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(2,132,199,0.15)}
+.login-logo{font-size:44px;margin-bottom:10px}
+.login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:10px}
+.login-title span{color:var(--accent)}
+.login-sub{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.login-google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;border-radius:14px;border:1px solid var(--border);background:#fff;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit}
+/* FRIENDS */
+#user-avatar-btn{overflow:hidden;padding:0}
+#user-avatar-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.fr-me{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:14px;padding:10px 14px;margin-bottom:14px}
+.fr-me img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.fr-me-info{font-size:13px;color:var(--text2)}
+.fr-me-info strong{display:block;font-size:14px;color:var(--text)}
+.fr-add-row{display:flex;gap:8px;margin-bottom:14px}
+.fr-add-row input{flex:1;padding:11px 14px;border-radius:12px;border:1px solid var(--border);font-size:13px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none}
+.fr-add-row button{padding:11px 16px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+.fr-section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin:14px 0 8px}
+.fr-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.fr-row img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--surface2)}
+.fr-row-name{flex:1;font-size:13.5px;color:var(--text)}
+.fr-row-name small{display:block;color:var(--text3);font-size:11px}
+.fr-btn{padding:7px 12px;border-radius:10px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.fr-btn.accept{background:var(--accent);color:#fff}
+.fr-btn.decline{background:var(--surface2);color:var(--text2)}
+.fr-empty{font-size:12.5px;color:var(--text3);padding:6px 0}
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,35,0.95);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;backdrop-filter:blur(12px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -154,10 +182,24 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 </head>
 <body>
 <div id="flash"></div>
+
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">📸</div>
+    <div class="login-title">T&amp;H <span>Spending</span></div>
+    <p class="login-sub">Đăng nhập để chụp ảnh và chia sẻ kỷ niệm với bạn bè đã xác nhận kết bạn</p>
+    <button class="login-google-btn" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.7 27 35.5 24 35.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.6 5.6C41.5 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Đăng nhập với Google
+    </button>
+  </div>
+</div>
+
 <div id="app">
   <div class="topbar">
     <div class="logo">T&amp;H<span>Spending</span></div>
     <div class="top-right">
+      <button class="icon-btn" id="user-avatar-btn" onclick="openFriendsPopup()"><span id="user-avatar-fallback">👥</span></button>
       <button class="icon-btn" onclick="exportPhotos()">💾</button>
     </div>
   </div>
@@ -232,6 +274,26 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   </div>
 </div>
 
+<div id="friends-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <div class="cal-title">Bạn bè</div>
+      <button class="cal-nav-btn" onclick="closeFriendsPopup()">✕</button>
+    </div>
+    <div class="fr-me" id="fr-me"></div>
+    <div class="fr-add-row">
+      <input type="email" id="fr-email-input" placeholder="Nhập email Gmail của bạn bè">
+      <button onclick="sendFriendRequestFromInput()">Mời</button>
+    </div>
+    <div id="fr-incoming"></div>
+    <div id="fr-outgoing"></div>
+    <div id="fr-list"></div>
+    <div class="cal-actions">
+      <button class="cal-close-btn" style="flex:1" onclick="signOutUser()">Đăng xuất</button>
+    </div>
+  </div>
+</div>
+
 <div id="viewer">
   <div class="viewer-top">
     <button class="viewer-close" onclick="closeViewer()">✕</button>
@@ -252,9 +314,35 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 
 <div id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
 const STORAGE_KEY='snapday_v2';
+
+// ====== FIREBASE CONFIG — dán config project của bạn vào đây ======
+const firebaseConfig={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  projectId:"YOUR_PROJECT_ID",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"YOUR_SENDER_ID",
+  appId:"YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const storage=firebase.storage();
+
+let currentUser=null;
+let friendUids=[];
+let localLegacyPhotos=[];
+let cloudPhotosCache=[];
+let incomingRequests=[],outgoingRequests=[],friendsList=[];
+let reqUnsubIn=null,reqUnsubOutA=null,reqUnsubOutB=null,photosUnsub=null;
+
 
 function savePhotos(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(photos))}catch(e){}}
 function loadPhotos(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)photos=JSON.parse(r)}catch(e){photos=[]}}
@@ -402,11 +490,36 @@ function capturePhoto(){
   const caption=captionEl?captionEl.value.trim():'';
   if(captionEl)captionEl.value='';
   const now=new Date();
-  const photo={id:Date.now().toString(),dataUrl,date:toDateStr(now),time:toTimeStr(now),caption};
+  const id=Date.now().toString();
+  const photo={id,dataUrl,date:toDateStr(now),time:toTimeStr(now),caption,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
   photos.unshift(photo);
   savePhotos();
   updateThumbPreview();
+  if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
   showToast('Đã lưu! 📸');
+  if(currentUser)uploadPhotoToCloud(photo);
+  else showToast('Chưa đăng nhập — ảnh chỉ lưu trên máy này');
+}
+
+async function uploadPhotoToCloud(photo){
+  try{
+    const blob=await(await fetch(photo.dataUrl)).blob();
+    const ref=storage.ref().child(`photos/${currentUser.uid}/${photo.id}.jpg`);
+    await ref.put(blob);
+    const url=await ref.getDownloadURL();
+    await db.collection('photos').doc(photo.id).set({
+      ownerUid:currentUser.uid,
+      ownerName:currentUser.displayName||currentUser.email,
+      ownerEmail:currentUser.email,
+      date:photo.date,time:photo.time,caption:photo.caption||'',
+      url,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const p=photos.find(x=>x.id===photo.id);
+    if(p){p.cloud=true;savePhotos();}
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi tải ảnh lên cloud, ảnh vẫn còn trên máy');
+  }
 }
 
 function toDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -607,6 +720,154 @@ function openPhotoFromCal(id){
   openViewer(id);
 }
 
+// ====== AUTH ======
+function signInGoogle(){
+  const provider=new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(e=>showToast('Đăng nhập thất bại: '+e.message));
+}
+function signOutUser(){
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(async user=>{
+  if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
+  if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
+  if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
+  if(photosUnsub){photosUnsub();photosUnsub=null;}
+  currentUser=user;
+  if(!user){
+    document.getElementById('login-screen').classList.remove('hide');
+    friendUids=[];cloudPhotosCache=[];
+    mergePhotos();
+    return;
+  }
+  document.getElementById('login-screen').classList.add('hide');
+  await db.collection('users').doc(user.uid).set({
+    email:(user.email||'').toLowerCase(),
+    displayName:user.displayName||'',
+    photoURL:user.photoURL||'',
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
+  const avatarBtn=document.getElementById('user-avatar-btn');
+  avatarBtn.innerHTML=user.photoURL?`<img src="${user.photoURL}" alt="">`:'<span>👤</span>';
+  listenFriends();
+  closeFriendsPopup();
+});
+
+// ====== FRIENDS ======
+function pairKey(a,b){return[a,b].sort().join('_');}
+
+async function sendFriendRequestFromInput(){
+  const input=document.getElementById('fr-email-input');
+  const email=input.value.trim().toLowerCase();
+  if(!email)return;
+  if(currentUser&&email===currentUser.email.toLowerCase()){showToast('Không thể tự kết bạn với chính mình');return;}
+  const snap=await db.collection('users').where('email','==',email).limit(1).get();
+  if(snap.empty){showToast('Chưa tìm thấy người dùng — họ cần đăng nhập app ít nhất 1 lần');return;}
+  const toUid=snap.docs[0].id;
+  const key=pairKey(currentUser.uid,toUid);
+  const existing=await db.collection('friendRequests').where('pairKey','==',key).limit(1).get();
+  if(!existing.empty){showToast('Đã có lời mời giữa hai người rồi');return;}
+  await db.collection('friendRequests').add({
+    fromUid:currentUser.uid,fromEmail:currentUser.email,fromName:currentUser.displayName||currentUser.email,fromPhoto:currentUser.photoURL||'',
+    toUid,toEmail:email,pairKey:key,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  input.value='';
+  showToast('Đã gửi lời mời kết bạn');
+}
+
+async function respondFriendRequest(reqId,accept){
+  await db.collection('friendRequests').doc(reqId).update({status:accept?'accepted':'declined'});
+  showToast(accept?'Đã chấp nhận kết bạn':'Đã từ chối lời mời');
+}
+
+function listenFriends(){
+  reqUnsubIn=db.collection('friendRequests').where('toUid','==',currentUser.uid).where('status','==','pending')
+    .onSnapshot(snap=>{incomingRequests=snap.docs.map(d=>({id:d.id,...d.data()}));renderFriendsUI();},()=>{});
+  const acceptedA={a:[]},acceptedB={b:[]};
+  reqUnsubOutA=db.collection('friendRequests').where('fromUid','==',currentUser.uid).where('status','in',['pending','accepted'])
+    .onSnapshot(snap=>{
+      outgoingRequests=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.status==='pending');
+      const acc=snap.docs.map(d=>d.data()).filter(r=>r.status==='accepted').map(r=>r.toUid);
+      acceptedA.a=acc;updateFriendUids([...acceptedA.a,...(acceptedB.b||[])]);
+    },()=>{});
+  reqUnsubOutB=db.collection('friendRequests').where('toUid','==',currentUser.uid).where('status','==','accepted')
+    .onSnapshot(snap=>{
+      const acc=snap.docs.map(d=>d.data()).map(r=>r.fromUid);
+      acceptedB.b=acc;updateFriendUids([...(acceptedA.a||[]),...acceptedB.b]);
+    },()=>{});
+}
+
+function updateFriendUids(list){
+  friendUids=Array.from(new Set([currentUser.uid,...list]));
+  friendsList=friendUids.filter(u=>u!==currentUser.uid);
+  renderFriendsUI();
+  subscribeCloudPhotos();
+}
+
+function renderFriendsUI(){
+  const meEl=document.getElementById('fr-me');
+  if(meEl&&currentUser){
+    meEl.innerHTML=`${currentUser.photoURL?`<img src="${currentUser.photoURL}" alt="">`:''}<div class="fr-me-info"><strong>${currentUser.displayName||''}</strong>${currentUser.email}</div>`;
+  }
+  const inEl=document.getElementById('fr-incoming');
+  if(inEl){
+    if(incomingRequests.length){
+      inEl.innerHTML='<div class="fr-section-title">Lời mời đang chờ</div>'+incomingRequests.map(r=>
+        `<div class="fr-row">${r.fromPhoto?`<img src="${r.fromPhoto}" alt="">`:''}<div class="fr-row-name">${r.fromName}<small>${r.fromEmail}</small></div>
+        <button class="fr-btn accept" onclick="respondFriendRequest('${r.id}',true)">Chấp nhận</button>
+        <button class="fr-btn decline" onclick="respondFriendRequest('${r.id}',false)">Từ chối</button></div>`).join('');
+    }else inEl.innerHTML='';
+  }
+  const outEl=document.getElementById('fr-outgoing');
+  if(outEl){
+    if(outgoingRequests.length){
+      outEl.innerHTML='<div class="fr-section-title">Đã gửi, đang chờ</div>'+outgoingRequests.map(r=>
+        `<div class="fr-row"><div class="fr-row-name">${r.toEmail}</div></div>`).join('');
+    }else outEl.innerHTML='';
+  }
+  const listEl=document.getElementById('fr-list');
+  if(listEl){
+    if(friendsList.length){
+      listEl.innerHTML='<div class="fr-section-title">Bạn bè</div><div id="fr-list-inner">Đang tải...</div>';
+      Promise.all(friendsList.map(uid=>db.collection('users').doc(uid).get())).then(docs=>{
+        const inner=document.getElementById('fr-list-inner');
+        if(inner)inner.outerHTML=docs.map(d=>{const u=d.data()||{};return `<div class="fr-row">${u.photoURL?`<img src="${u.photoURL}" alt="">`:''}<div class="fr-row-name">${u.displayName||u.email}<small>${u.email||''}</small></div></div>`;}).join('');
+      });
+    }else{
+      listEl.innerHTML='<div class="fr-section-title">Bạn bè</div><div class="fr-empty">Chưa có bạn bè nào được xác nhận</div>';
+    }
+  }
+}
+
+function openFriendsPopup(){document.getElementById('friends-modal').classList.add('open');renderFriendsUI();}
+function closeFriendsPopup(){document.getElementById('friends-modal').classList.remove('open');}
+
+// ====== CLOUD PHOTOS ======
+function subscribeCloudPhotos(){
+  if(photosUnsub){photosUnsub();photosUnsub=null;}
+  if(!friendUids.length)return;
+  photosUnsub=db.collection('photos').where('ownerUid','in',friendUids.slice(0,10))
+    .onSnapshot(snap=>{
+      cloudPhotosCache=snap.docs.map(d=>{
+        const p=d.data();
+        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
+      });
+      mergePhotos();
+    },e=>console.error(e));
+}
+
+function mergePhotos(){
+  const map=new Map();
+  localLegacyPhotos.forEach(p=>map.set(p.id,p));
+  photos.filter(p=>!p.cloud&&p.ownerUid&&currentUser&&p.ownerUid===currentUser.uid).forEach(p=>{if(!map.has(p.id))map.set(p.id,p);});
+  cloudPhotosCache.forEach(p=>map.set(p.id,p));
+  photos=Array.from(map.values()).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  updateThumbPreview();
+  if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
+  if(document.getElementById('calendar-modal').classList.contains('open'))renderCalendar();
+}
+
 function switchTab(tab){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -624,7 +885,9 @@ function showToast(msg){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  loadPhotos();updateThumbPreview();startCamera();
+  loadPhotos();
+  localLegacyPhotos=photos.filter(p=>!p.ownerUid);
+  updateThumbPreview();startCamera();
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
