@@ -164,6 +164,24 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cat-stat-fill{height:100%;border-radius:4px;background:linear-gradient(135deg,#0284c7,#a855f7)}
 .stats-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text2);text-align:center;padding:40px 20px}
 .stats-empty .big-icon{font-size:48px}
+.cat-stat-row{cursor:pointer;transition:transform .1s ease}
+.cat-stat-row:active{transform:scale(0.98)}
+.cd-summary{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.cd-summary-icon{font-size:26px}
+.cd-summary-info{flex:1}
+.cd-summary-info strong{display:block;font-size:15px;color:var(--text)}
+.cd-summary-info span{font-size:12px;color:var(--text2)}
+.cd-summary-total{font-size:16px;font-weight:700;color:var(--accent)}
+.cd-list{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.cd-list::-webkit-scrollbar{display:none}
+.cd-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer}
+.cd-row-thumb{width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--surface2)}
+.cd-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cd-row-body{flex:1;min-width:0}
+.cd-row-cap{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-row-date{font-size:11px;color:var(--text2)}
+.cd-row-amount{font-size:13px;font-weight:700;color:#ef4444;flex-shrink:0}
+.cd-empty{text-align:center;font-size:13px;color:var(--text3);padding:24px 0}
 /* NAV */
 .bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
@@ -394,6 +412,20 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     <div class="viewer-actions">
       <button class="va-btn share" onclick="sharePhoto()">Chia sẻ</button>
       <button class="va-btn delete" onclick="deletePhoto()">Xoá</button>
+    </div>
+  </div>
+</div>
+
+<div id="catdetail-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <div class="cal-title" id="cd-title">Chi tiết danh mục</div>
+      <button class="cal-nav-btn" onclick="closeCatDetail()">✕</button>
+    </div>
+    <div class="cd-summary" id="cd-summary"></div>
+    <div class="cd-list" id="cd-list"></div>
+    <div class="cal-actions">
+      <button class="cal-close-btn" style="flex:1" onclick="closeCatDetail()">Đóng</button>
     </div>
   </div>
 </div>
@@ -1238,19 +1270,21 @@ function renderStats(){
     const byCat={};
     expensePhotos.forEach(p=>{
       const cid=p.category||'khac';
-      byCat[cid]=(byCat[cid]||0)+p.amount;
+      byCat[cid]=byCat[cid]||{total:0,count:0};
+      byCat[cid].total+=p.amount;
+      byCat[cid].count+=1;
     });
-    const rows=Object.keys(byCat).map(cid=>({cid,total:byCat[cid]})).sort((a,b)=>b.total-a.total);
+    const rows=Object.keys(byCat).map(cid=>({cid,total:byCat[cid].total,count:byCat[cid].count})).sort((a,b)=>b.total-a.total);
     const maxVal=rows[0].total;
-    html+=`<div class="cat-stats-title">Chi tiêu theo danh mục</div>`;
+    html+=`<div class="cat-stats-title">Chi tiêu theo danh mục (bấm để xem chi tiết)</div>`;
     rows.forEach(r=>{
       const info=getCatInfo('expense',r.cid);
       const pct=Math.round((r.total/maxVal)*100);
       const share=totalExpense>0?Math.round((r.total/totalExpense)*100):0;
-      html+=`<div class="cat-stat-row">
+      html+=`<div class="cat-stat-row" onclick="openCatDetail('${r.cid}')">
         <div class="cat-stat-icon">${info.icon}</div>
         <div class="cat-stat-body">
-          <div class="cat-stat-top"><span class="csn">${info.label} <span style="color:var(--text3);font-weight:400">(${share}%)</span></span><span class="csv">${formatVND(r.total)}</span></div>
+          <div class="cat-stat-top"><span class="csn">${info.label} <span style="color:var(--text3);font-weight:400">(${share}% · ${r.count} lần)</span></span><span class="csv">${formatVND(r.total)}</span></div>
           <div class="cat-stat-track"><div class="cat-stat-fill" style="width:${pct}%"></div></div>
         </div>
       </div>`;
@@ -1262,6 +1296,41 @@ function renderStats(){
   }
 
   el.innerHTML=html;
+  statsCache={monthNameLabel:`${monthNames[month]} ${year}`,expensePhotos};
+}
+
+// ====== CATEGORY DETAIL ======
+let statsCache={monthNameLabel:'',expensePhotos:[]};
+function openCatDetail(cid){
+  const list=statsCache.expensePhotos.filter(p=>(p.category||'khac')===cid).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  if(!list.length)return;
+  const info=getCatInfo('expense',cid);
+  const total=list.reduce((s,p)=>s+p.amount,0);
+  document.getElementById('cd-title').textContent=`${info.icon} ${info.label}`;
+  document.getElementById('cd-summary').innerHTML=`
+    <div class="cd-summary-icon">${info.icon}</div>
+    <div class="cd-summary-info">
+      <strong>${info.label} · ${statsCache.monthNameLabel}</strong>
+      <span>${list.length} giao dịch · trung bình ${formatVND(Math.round(total/list.length))}</span>
+    </div>
+    <div class="cd-summary-total">${formatVND(total)}</div>`;
+  document.getElementById('cd-list').innerHTML=list.map(p=>{
+    const d=new Date(p.date+'T00:00:00');
+    const dateLabel=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+    const cap=p.caption?p.caption:'(Không có ghi chú)';
+    return`<div class="cd-row" onclick="closeCatDetail();openViewer('${p.id}')">
+      <div class="cd-row-thumb"><img src="${p.dataUrl}" alt="" loading="lazy"></div>
+      <div class="cd-row-body">
+        <div class="cd-row-cap">${cap}</div>
+        <div class="cd-row-date">${dateLabel} · ${p.time}</div>
+      </div>
+      <div class="cd-row-amount">-${formatVND(p.amount)}</div>
+    </div>`;
+  }).join('')||`<div class="cd-empty">Không có giao dịch nào</div>`;
+  document.getElementById('catdetail-modal').classList.add('open');
+}
+function closeCatDetail(){
+  document.getElementById('catdetail-modal').classList.remove('open');
 }
 
 let toastTimer;
