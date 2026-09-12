@@ -46,6 +46,10 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .money-toggle.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
 .money-fields{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .money-fields-row{display:flex;gap:8px}
+#time-input{flex:1;min-width:0;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;color:#fff;font-family:inherit;backdrop-filter:blur(8px);outline:none;color-scheme:dark}
+.loc-pill{flex-shrink:0;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:9px 14px;font-size:12.5px;color:rgba(255,255,255,0.85);cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;font-family:inherit}
+.loc-pill.active{background:linear-gradient(135deg,#0284c7,#22c55e);border-color:transparent;color:#fff;font-weight:600}
+.loc-pill.loading{opacity:0.6}
 .cat-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 .cat-pills::-webkit-scrollbar{display:none}
 .cat-pill{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:14px;padding:6px 10px;font-size:11.5px;color:rgba(255,255,255,0.75);cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;font-family:inherit}
@@ -128,6 +132,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .vz-btn.vz-reset{font-size:11px;font-weight:600}
 .viewer-bottom{padding:14px 20px calc(var(--safe-bottom) + 14px);background:rgba(0,0,0,0.6);backdrop-filter:blur(12px)}
 .viewer-caption{font-size:14px;color:rgba(255,255,255,0.85);min-height:20px;line-height:1.4}
+.viewer-location{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:12.5px;color:#38bdf8;text-decoration:none;background:rgba(56,189,248,0.12);border-radius:10px;padding:5px 10px}
 .viewer-actions{display:flex;gap:10px;margin-top:12px}
 .va-btn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .va-btn.delete{background:rgba(255,59,48,0.15);color:#FF3B30}
@@ -180,6 +185,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cd-row-body{flex:1;min-width:0}
 .cd-row-cap{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cd-row-date{font-size:11px;color:var(--text2)}
+.cd-row-loc{font-size:11px;color:var(--accent);text-decoration:none}
 .cd-row-amount{font-size:13px;font-weight:700;color:#ef4444;flex-shrink:0}
 .cd-empty{text-align:center;font-size:13px;color:var(--text3);padding:24px 0}
 /* NAV */
@@ -409,6 +415,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   <div class="viewer-bottom">
     <div class="viewer-caption" id="viewer-caption"></div>
     <div class="viewer-amount" id="viewer-amount" style="display:none"></div>
+    <a class="viewer-location" id="viewer-location" style="display:none" target="_blank" rel="noopener">📍 Xem trên Google Maps</a>
     <div class="viewer-actions">
       <button class="va-btn share" onclick="sharePhoto()">Chia sẻ</button>
       <button class="va-btn delete" onclick="deletePhoto()">Xoá</button>
@@ -528,6 +535,10 @@ async function startCamera(){
                 </div>
                 <input id="amount-input" type="number" inputmode="numeric" placeholder="Số tiền (đ)">
               </div>
+              <div class="money-fields-row">
+                <input id="time-input" type="time">
+                <div class="loc-pill" id="loc-pill" onclick="captureLocation()">📍 Lấy vị trí</div>
+              </div>
               <div class="cat-pills" id="cat-pills"></div>
             </div>
           </div>
@@ -620,7 +631,7 @@ function getCatInfo(type,catId){
   const list=getCatList(type);
   return list.find(c=>c.id===catId)||list[list.length-1];
 }
-let moneyType='expense',moneyRowOpen=false,selectedCategory='khac';
+let moneyType='expense',moneyRowOpen=false,selectedCategory='khac',capturedLocation=null;
 function renderCatPills(){
   const wrap=document.getElementById('cat-pills');
   if(!wrap)return;
@@ -639,7 +650,24 @@ function toggleMoneyRow(){
   const toggle=document.getElementById('money-toggle');
   if(fields)fields.style.display=moneyRowOpen?'flex':'none';
   if(toggle)toggle.classList.toggle('active',moneyRowOpen);
-  if(moneyRowOpen){renderCatPills();const inp=document.getElementById('amount-input');if(inp)setTimeout(()=>inp.focus(),50);}
+  if(moneyRowOpen){
+    renderCatPills();
+    const inp=document.getElementById('amount-input');if(inp)setTimeout(()=>inp.focus(),50);
+    const timeEl=document.getElementById('time-input');if(timeEl&&!timeEl.value)timeEl.value=toTimeStr(new Date());
+  }
+}
+function captureLocation(){
+  const pill=document.getElementById('loc-pill');
+  if(!navigator.geolocation){showToast('Thiết bị không hỗ trợ định vị');return;}
+  if(pill){pill.classList.add('loading');pill.textContent='📍 Đang lấy vị trí…';}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    capturedLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    if(pill){pill.classList.remove('loading');pill.classList.add('active');pill.textContent='📍 Đã lấy vị trí';}
+    showToast('Đã lấy vị trí hiện tại 📍');
+  },err=>{
+    if(pill){pill.classList.remove('loading');pill.textContent='📍 Lấy vị trí';}
+    showToast('Không lấy được vị trí. Kiểm tra quyền truy cập vị trí.');
+  },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
 }
 function setMoneyType(type,el){
   moneyType=type;
@@ -650,13 +678,17 @@ function setMoneyType(type,el){
 }
 function formatVND(n){return Number(n).toLocaleString('vi-VN')+'đ';}
 function resetMoneyRow(){
-  moneyRowOpen=false;moneyType='expense';selectedCategory='khac';
+  moneyRowOpen=false;moneyType='expense';selectedCategory='khac';capturedLocation=null;
   const fields=document.getElementById('money-fields');
   const toggle=document.getElementById('money-toggle');
   const amountEl=document.getElementById('amount-input');
+  const timeEl=document.getElementById('time-input');
+  const pill=document.getElementById('loc-pill');
   if(fields)fields.style.display='none';
   if(toggle)toggle.classList.remove('active');
   if(amountEl)amountEl.value='';
+  if(timeEl)timeEl.value='';
+  if(pill){pill.classList.remove('active','loading');pill.textContent='📍 Lấy vị trí';}
   document.querySelectorAll('.money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type==='expense'));
 }
 
@@ -684,10 +716,13 @@ function capturePhoto(){
   const amount=amountRaw?parseInt(amountRaw,10):0;
   const finalMoneyType=amount>0?moneyType:null;
   const finalCategory=amount>0?selectedCategory:null;
+  const timeEl=document.getElementById('time-input');
+  const customTime=(amount>0&&timeEl&&timeEl.value)?timeEl.value:null;
+  const finalLocation=amount>0?capturedLocation:null;
   resetMoneyRow();
   const now=new Date();
   const id=Date.now().toString();
-  const photo={id,dataUrl,date:toDateStr(now),time:toTimeStr(now),caption,amount,moneyType:finalMoneyType,category:finalCategory,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
+  const photo={id,dataUrl,date:toDateStr(now),time:customTime||toTimeStr(now),caption,amount,moneyType:finalMoneyType,category:finalCategory,location:finalLocation,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
   photos.unshift(photo);
   savePhotos();
   updateThumbPreview();
@@ -708,7 +743,7 @@ async function uploadPhotoToCloud(photo){
       ownerName:currentUser.displayName||currentUser.email,
       ownerEmail:currentUser.email,
       date:photo.date,time:photo.time,caption:photo.caption||'',
-      amount:photo.amount||0,moneyType:photo.moneyType||null,category:photo.category||null,
+      amount:photo.amount||0,moneyType:photo.moneyType||null,category:photo.category||null,location:photo.location||null,
       url,createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     const p=photos.find(x=>x.id===photo.id);
@@ -801,6 +836,15 @@ function openViewer(id){
   document.getElementById('vm-time').textContent=p.time;
   const d=new Date(p.date+'T00:00:00');
   document.getElementById('vm-date').textContent=`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  const locEl=document.getElementById('viewer-location');
+  if(locEl){
+    if(p.location&&p.location.lat!=null){
+      locEl.href=`https://www.google.com/maps?q=${p.location.lat},${p.location.lng}`;
+      locEl.style.display='inline-flex';
+    }else{
+      locEl.style.display='none';
+    }
+  }
   document.getElementById('viewer').classList.add('open');
 }
 
@@ -1175,7 +1219,7 @@ function subscribeCloudPhotos(){
     .onSnapshot(snap=>{
       cloudPhotosCache=snap.docs.map(d=>{
         const p=d.data();
-        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
+        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
       });
       mergePhotos();
     },e=>console.error(e));
@@ -1318,11 +1362,12 @@ function openCatDetail(cid){
     const d=new Date(p.date+'T00:00:00');
     const dateLabel=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
     const cap=p.caption?p.caption:'(Không có ghi chú)';
+    const locLink=(p.location&&p.location.lat!=null)?`<a class="cd-row-loc" href="https://www.google.com/maps?q=${p.location.lat},${p.location.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()"> · 📍 Bản đồ</a>`:'';
     return`<div class="cd-row" onclick="closeCatDetail();openViewer('${p.id}')">
       <div class="cd-row-thumb"><img src="${p.dataUrl}" alt="" loading="lazy"></div>
       <div class="cd-row-body">
         <div class="cd-row-cap">${cap}</div>
-        <div class="cd-row-date">${dateLabel} · ${p.time}</div>
+        <div class="cd-row-date">${dateLabel} · ${p.time}${locLink}</div>
       </div>
       <div class="cd-row-amount">-${formatVND(p.amount)}</div>
     </div>`;
