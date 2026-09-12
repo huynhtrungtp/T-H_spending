@@ -16,8 +16,8 @@
 <style>
 :root{--bg:#f0f9ff;--surface:#ffffff;--surface2:#e0f2fe;--border:#bae6fd;--accent:#0284c7;--accent-dim:rgba(2,132,199,0.14);--text:#075985;--text2:#0369a1;--text3:#7dd3fc;--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#f3e8ff 100%);color:var(--text);font-family:'Be Vietnam Pro',-apple-system,sans-serif;overflow:hidden;position:fixed}
-#app{width:100%;height:100%;display:flex;flex-direction:column}
+html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#f3e8ff 100%);color:var(--text);font-family:'Be Vietnam Pro',-apple-system,sans-serif;overflow:hidden;position:fixed;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(2,132,199,0.12)}
 .topbar{padding:calc(var(--safe-top) + 6px) 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:transparent}
 .logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#075985 0%,#0369a1 40%,#7e22ce 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .logo span{background:linear-gradient(135deg,#0369a1 0%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -111,7 +111,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .photo-grid.solo{grid-template-columns:1fr}
 .photo-grid.duo{grid-template-columns:repeat(2,1fr)}
 .photo-thumb{aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;background:var(--surface)}
-.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb img{width:100%;height:100%;object-fit:contain;background:var(--surface2);display:block}
 .photo-thumb .ph-time{position:absolute;bottom:5px;right:6px;font-size:10px;color:rgba(255,255,255,0.75);background:rgba(0,0,0,0.45);border-radius:5px;padding:1px 5px;font-weight:500}
 /* VIEWER */
 #viewer{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column}
@@ -121,7 +121,11 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .viewer-meta{text-align:right}
 .viewer-meta .vm-time{font-size:13px;color:rgba(255,255,255,0.7)}
 .viewer-meta .vm-date{font-size:11px;color:rgba(255,255,255,0.4)}
-#viewer-img{flex:1;width:100%;object-fit:contain;display:block}
+.viewer-stage{flex:1;width:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
+.viewer-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;transition:transform .15s ease;will-change:transform;user-select:none}
+.viewer-zoom-controls{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:5}
+.vz-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);border:0.5px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);font-family:inherit}
+.vz-btn.vz-reset{font-size:11px;font-weight:600}
 .viewer-bottom{padding:14px 20px calc(var(--safe-bottom) + 14px);background:rgba(0,0,0,0.6);backdrop-filter:blur(12px)}
 .viewer-caption{font-size:14px;color:rgba(255,255,255,0.85);min-height:20px;line-height:1.4}
 .viewer-actions{display:flex;gap:10px;margin-top:12px}
@@ -189,7 +193,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cal-day.has-photo .cal-day-num{background:var(--accent-dim);color:var(--accent);font-weight:600}
 .cal-day.streak-day .cal-day-num{background:linear-gradient(135deg,#0284c7,#a855f7);color:#fff;font-weight:700}
 .cal-day-thumb-wrap{width:100%;flex:1;min-height:0;border-radius:7px;overflow:hidden;background:var(--surface2)}
-.cal-day-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.cal-day-thumb-wrap img{width:100%;height:100%;object-fit:contain;display:block}
 .cal-day.has-photo,.cal-day.streak-day{cursor:pointer}
 .cal-day.selected .cal-day-thumb-wrap{box-shadow:inset 0 0 0 2px var(--accent)}
 .cal-day-photos{max-height:0;overflow:hidden;transition:max-height .25s ease}
@@ -197,7 +201,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cal-day-photos-header{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
 .cal-day-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:180px;overflow-y:auto}
 .cal-day-thumb{aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;background:var(--surface2)}
-.cal-day-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cal-day-thumb img{width:100%;height:100%;object-fit:contain;display:block}
 .cal-actions{display:flex;gap:10px;margin-top:16px}
 .cal-view-btn{flex:1;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .cal-close-btn{padding:12px 18px;border-radius:12px;border:none;background:var(--surface2);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
@@ -369,7 +373,14 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
       <div class="vm-date" id="vm-date"></div>
     </div>
   </div>
-  <img id="viewer-img" src="" alt="">
+  <div class="viewer-stage" id="viewer-stage">
+    <img id="viewer-img" src="" alt="" draggable="false" onpointerdown="viewerPointerDown(event)" onpointermove="viewerPointerMove(event)" onpointerup="viewerPointerUp(event)" onpointercancel="viewerPointerUp(event)">
+    <div class="viewer-zoom-controls">
+      <button class="vz-btn" onclick="viewerZoomIn()">＋</button>
+      <button class="vz-btn vz-reset" onclick="viewerZoomReset()" id="vz-reset-btn">1×</button>
+      <button class="vz-btn" onclick="viewerZoomOut()">－</button>
+    </div>
+  </div>
   <div class="viewer-bottom">
     <div class="viewer-caption" id="viewer-caption"></div>
     <div class="viewer-amount" id="viewer-amount" style="display:none"></div>
@@ -736,6 +747,7 @@ function openViewer(id){
   currentViewerId=id;
   document.getElementById('viewer-img').src=p.dataUrl;
   document.getElementById('viewer-caption').textContent=p.caption||'';
+  viewerZoomReset();
   const amountEl=document.getElementById('viewer-amount');
   if(amountEl){
     if(p.amount>0){
@@ -753,7 +765,77 @@ function openViewer(id){
   document.getElementById('viewer').classList.add('open');
 }
 
-function closeViewer(){document.getElementById('viewer').classList.remove('open');currentViewerId=null;}
+function closeViewer(){document.getElementById('viewer').classList.remove('open');currentViewerId=null;viewerZoomReset();}
+
+// ====== VIEWER ZOOM / PAN ======
+let viewerZoom=1,viewerPanX=0,viewerPanY=0;
+const VZ_MIN=1,VZ_MAX=4;
+let vPointers=new Map(),vStartDist=0,vStartZoom=1,vDragging=false,vDragStart=null,vPanStart=null,vLastTap=0;
+
+function applyViewerTransform(){
+  const img=document.getElementById('viewer-img');
+  if(!img)return;
+  img.style.transform=`translate(${viewerPanX}px,${viewerPanY}px) scale(${viewerZoom})`;
+  img.style.cursor=viewerZoom>1?'grab':'default';
+  const resetBtn=document.getElementById('vz-reset-btn');
+  if(resetBtn)resetBtn.textContent=viewerZoom.toFixed(1).replace('.0','')+'×';
+}
+function viewerZoomIn(){viewerZoom=Math.min(VZ_MAX,Math.round((viewerZoom+0.5)*10)/10);applyViewerTransform();}
+function viewerZoomOut(){
+  viewerZoom=Math.max(VZ_MIN,Math.round((viewerZoom-0.5)*10)/10);
+  if(viewerZoom<=1){viewerZoom=1;viewerPanX=0;viewerPanY=0;}
+  applyViewerTransform();
+}
+function viewerZoomReset(){
+  viewerZoom=1;viewerPanX=0;viewerPanY=0;vPointers=new Map();vStartDist=0;vDragging=false;
+  applyViewerTransform();
+}
+function viewerPointerDown(e){
+  const stage=document.getElementById('viewer-stage');
+  try{stage.setPointerCapture(e.pointerId);}catch(err){}
+  vPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(vPointers.size===2){
+    const pts=[...vPointers.values()];
+    vStartDist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    vStartZoom=viewerZoom;
+    vDragging=false;
+  }else if(vPointers.size===1){
+    const now=Date.now();
+    if(now-vLastTap<300){
+      if(viewerZoom>1)viewerZoomReset();
+      else{viewerZoom=2.5;applyViewerTransform();}
+      vLastTap=0;
+      return;
+    }
+    vLastTap=now;
+    vDragging=viewerZoom>1;
+    vDragStart={x:e.clientX,y:e.clientY};
+    vPanStart={x:viewerPanX,y:viewerPanY};
+  }
+}
+function viewerPointerMove(e){
+  if(!vPointers.has(e.pointerId))return;
+  vPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(vPointers.size===2){
+    const pts=[...vPointers.values()];
+    const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    if(vStartDist>0){
+      viewerZoom=Math.min(VZ_MAX,Math.max(VZ_MIN,Math.round(vStartZoom*(dist/vStartDist)*10)/10));
+      applyViewerTransform();
+    }
+  }else if(vDragging&&vPointers.size===1){
+    const p=[...vPointers.values()][0];
+    viewerPanX=vPanStart.x+(p.x-vDragStart.x);
+    viewerPanY=vPanStart.y+(p.y-vDragStart.y);
+    applyViewerTransform();
+  }
+}
+function viewerPointerUp(e){
+  vPointers.delete(e.pointerId);
+  if(vPointers.size<2)vStartDist=0;
+  vDragging=false;
+  if(viewerZoom<=1){viewerPanX=0;viewerPanY=0;applyViewerTransform();}
+}
 
 function deletePhoto(){
   if(!currentViewerId)return;
