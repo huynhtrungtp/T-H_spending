@@ -271,6 +271,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     <div class="logo">T&amp;H<span>Spending</span></div>
     <div class="top-right">
       <button class="icon-btn" id="user-avatar-btn" onclick="openFriendsPopup()"><span id="user-avatar-fallback">👥</span></button>
+      <button class="icon-btn" onclick="forceSync()">🔄</button>
       <button class="icon-btn" onclick="exportPhotos()">💾</button>
     </div>
   </div>
@@ -1146,8 +1147,26 @@ function subscribeCloudPhotos(){
         return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
       });
       mergePhotos();
-    },e=>console.error(e));
+    },e=>{
+      console.error('subscribeCloudPhotos error:',e);
+      showToast('Lỗi đồng bộ cloud: '+(e.code||e.message||'không rõ'));
+    });
 }
+
+function forceSync(){
+  if(!currentUser){showToast('Chưa đăng nhập — không có gì để đồng bộ');return;}
+  showToast('Đang đồng bộ…');
+  subscribeCloudPhotos();
+  migrateLocalPhotos();
+}
+
+// Re-attach the realtime listener whenever the app comes back to the foreground.
+// Mobile Safari/Chrome can silently drop long-lived Firestore listeners after
+// the tab/PWA has been backgrounded for a while, which is the most common
+// reason photos taken on one device don't show up on another until reopened.
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&currentUser)subscribeCloudPhotos();
+});
 
 function mergePhotos(){
   const map=new Map();
