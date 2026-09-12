@@ -44,7 +44,14 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .money-row{margin-bottom:10px}
 .money-toggle{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:20px;padding:7px 14px;font-size:12.5px;color:rgba(255,255,255,0.85);cursor:pointer;backdrop-filter:blur(8px);width:fit-content}
 .money-toggle.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
-.money-fields{display:flex;gap:8px;margin-top:8px}
+.money-fields{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.money-fields-row{display:flex;gap:8px}
+.cat-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.cat-pills::-webkit-scrollbar{display:none}
+.cat-pill{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:14px;padding:6px 10px;font-size:11.5px;color:rgba(255,255,255,0.75);cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;font-family:inherit}
+.cat-pill.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
+.ph-cat-icon{position:absolute;top:5px;left:5px;font-size:14px;background:rgba(0,0,0,0.45);border-radius:8px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.viewer-cat{display:inline-block;margin-left:8px;font-size:12px;color:rgba(255,255,255,0.6)}
 .money-type{display:flex;background:rgba(0,0,0,0.5);border-radius:12px;padding:3px;gap:2px;border:0.5px solid rgba(255,255,255,0.15);flex-shrink:0}
 .money-type-btn{border:none;background:transparent;color:rgba(255,255,255,0.6);font-size:12.5px;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit;font-weight:600}
 .money-type-btn[data-type="expense"].active{background:#ef4444;color:#fff}
@@ -121,6 +128,38 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .va-btn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .va-btn.delete{background:rgba(255,59,48,0.15);color:#FF3B30}
 .va-btn.share{background:var(--accent-dim);color:var(--accent)}
+/* STATS */
+#s-stats{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--safe-bottom) + 14px);gap:16px;align-items:stretch}
+#s-stats::-webkit-scrollbar{display:none}
+.stats-month-nav{display:flex;align-items:center;justify-content:center;gap:16px;flex-shrink:0}
+.stats-month-title{font-size:15px;font-weight:600;color:var(--text);min-width:120px;text-align:center}
+.stats-summary{display:flex;gap:10px;flex-shrink:0}
+.stats-card{flex:1;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:14px 12px;text-align:center}
+.stats-card .sc-label{font-size:11.5px;color:var(--text2);margin-bottom:4px}
+.stats-card .sc-value{font-size:15px;font-weight:700}
+.stats-card.expense .sc-value{color:#ef4444}
+.stats-card.income .sc-value{color:#22c55e}
+.stats-card.balance .sc-value{color:var(--accent)}
+.budget-box{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:14px 16px;flex-shrink:0}
+.budget-box-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.budget-box-head strong{font-size:13.5px}
+.budget-edit-link{font-size:12px;color:var(--accent);cursor:pointer;font-weight:600}
+.budget-bar-track{width:100%;height:10px;border-radius:6px;background:var(--surface2);overflow:hidden;margin-bottom:6px}
+.budget-bar-fill{height:100%;border-radius:6px;background:linear-gradient(135deg,#0284c7,#a855f7);transition:width .3s ease}
+.budget-bar-fill.over{background:linear-gradient(135deg,#ef4444,#f97316)}
+.budget-info{font-size:12px;color:var(--text2);display:flex;justify-content:space-between}
+.budget-empty{font-size:12.5px;color:var(--text3)}
+.cat-stats-title{font-size:13px;font-weight:600;color:var(--text);margin:2px 0 2px;flex-shrink:0}
+.cat-stat-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:11px 14px;flex-shrink:0}
+.cat-stat-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.cat-stat-body{flex:1;min-width:0}
+.cat-stat-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+.cat-stat-top .csn{font-weight:600;color:var(--text)}
+.cat-stat-top .csv{font-weight:700;color:var(--text)}
+.cat-stat-track{width:100%;height:6px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.cat-stat-fill{height:100%;border-radius:4px;background:linear-gradient(135deg,#0284c7,#a855f7)}
+.stats-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text2);text-align:center;padding:40px 20px}
+.stats-empty .big-icon{font-size:48px}
 /* NAV */
 .bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
@@ -234,6 +273,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   <div class="tabbar">
     <div class="tab active" id="tab-camera" onclick="switchTab('camera')">Camera</div>
     <div class="tab" id="tab-gallery" onclick="switchTab('gallery')">Nhật ký</div>
+    <div class="tab" id="tab-stats" onclick="switchTab('stats')">Thống kê</div>
   </div>
 
   <div class="screen active" id="s-camera">
@@ -248,6 +288,8 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   </div>
 
   <div class="screen" id="s-gallery"></div>
+
+  <div class="screen" id="s-stats"></div>
 
   <div class="bottom-nav">
     <div class="nav-item" onclick="openCalendarPopup()">
@@ -429,11 +471,14 @@ async function startCamera(){
           <div class="money-row">
             <div class="money-toggle" id="money-toggle" onclick="toggleMoneyRow()">💰 Thêm chi tiêu</div>
             <div class="money-fields" id="money-fields" style="display:none">
-              <div class="money-type">
-                <button type="button" class="money-type-btn active" data-type="expense" onclick="setMoneyType('expense',this)">Chi</button>
-                <button type="button" class="money-type-btn" data-type="income" onclick="setMoneyType('income',this)">Thu</button>
+              <div class="money-fields-row">
+                <div class="money-type">
+                  <button type="button" class="money-type-btn active" data-type="expense" onclick="setMoneyType('expense',this)">Chi</button>
+                  <button type="button" class="money-type-btn" data-type="income" onclick="setMoneyType('income',this)">Thu</button>
+                </div>
+                <input id="amount-input" type="number" inputmode="numeric" placeholder="Số tiền (đ)">
               </div>
-              <input id="amount-input" type="number" inputmode="numeric" placeholder="Số tiền (đ)">
+              <div class="cat-pills" id="cat-pills"></div>
             </div>
           </div>
           <input id="caption-input" type="text" placeholder="Thêm caption…" maxlength="80">
@@ -506,23 +551,56 @@ function flipCamera(){
   startCamera();
 }
 
-let moneyType='expense',moneyRowOpen=false;
+const EXPENSE_CATS=[
+  {id:'an-uong',icon:'🍔',label:'Ăn uống'},
+  {id:'di-chuyen',icon:'🚗',label:'Di chuyển'},
+  {id:'mua-sam',icon:'🛍️',label:'Mua sắm'},
+  {id:'hoa-don',icon:'🧾',label:'Hoá đơn'},
+  {id:'giai-tri',icon:'🎮',label:'Giải trí'},
+  {id:'suc-khoe',icon:'💊',label:'Sức khoẻ'},
+  {id:'khac',icon:'📦',label:'Khác'}
+];
+const INCOME_CATS=[
+  {id:'luong',icon:'💵',label:'Lương'},
+  {id:'thuong',icon:'🎁',label:'Thưởng'},
+  {id:'khac-thu',icon:'📦',label:'Khác'}
+];
+function getCatList(type){return type==='income'?INCOME_CATS:EXPENSE_CATS;}
+function getCatInfo(type,catId){
+  const list=getCatList(type);
+  return list.find(c=>c.id===catId)||list[list.length-1];
+}
+let moneyType='expense',moneyRowOpen=false,selectedCategory='khac';
+function renderCatPills(){
+  const wrap=document.getElementById('cat-pills');
+  if(!wrap)return;
+  const list=getCatList(moneyType);
+  if(!list.find(c=>c.id===selectedCategory))selectedCategory=list[list.length-1].id;
+  wrap.innerHTML=list.map(c=>`<div class="cat-pill${c.id===selectedCategory?' active':''}" onclick="selectCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
+}
+function selectCategory(id){
+  selectedCategory=id;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  renderCatPills();
+}
 function toggleMoneyRow(){
   moneyRowOpen=!moneyRowOpen;
   const fields=document.getElementById('money-fields');
   const toggle=document.getElementById('money-toggle');
   if(fields)fields.style.display=moneyRowOpen?'flex':'none';
   if(toggle)toggle.classList.toggle('active',moneyRowOpen);
-  if(moneyRowOpen){const inp=document.getElementById('amount-input');if(inp)setTimeout(()=>inp.focus(),50);}
+  if(moneyRowOpen){renderCatPills();const inp=document.getElementById('amount-input');if(inp)setTimeout(()=>inp.focus(),50);}
 }
 function setMoneyType(type,el){
   moneyType=type;
   document.querySelectorAll('.money-type-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
+  selectedCategory=getCatList(type)[getCatList(type).length-1].id;
+  renderCatPills();
 }
 function formatVND(n){return Number(n).toLocaleString('vi-VN')+'đ';}
 function resetMoneyRow(){
-  moneyRowOpen=false;moneyType='expense';
+  moneyRowOpen=false;moneyType='expense';selectedCategory='khac';
   const fields=document.getElementById('money-fields');
   const toggle=document.getElementById('money-toggle');
   const amountEl=document.getElementById('amount-input');
@@ -555,10 +633,11 @@ function capturePhoto(){
   const amountRaw=amountEl?amountEl.value.replace(/[^\d]/g,''):'';
   const amount=amountRaw?parseInt(amountRaw,10):0;
   const finalMoneyType=amount>0?moneyType:null;
+  const finalCategory=amount>0?selectedCategory:null;
   resetMoneyRow();
   const now=new Date();
   const id=Date.now().toString();
-  const photo={id,dataUrl,date:toDateStr(now),time:toTimeStr(now),caption,amount,moneyType:finalMoneyType,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
+  const photo={id,dataUrl,date:toDateStr(now),time:toTimeStr(now),caption,amount,moneyType:finalMoneyType,category:finalCategory,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
   photos.unshift(photo);
   savePhotos();
   updateThumbPreview();
@@ -579,7 +658,7 @@ async function uploadPhotoToCloud(photo){
       ownerName:currentUser.displayName||currentUser.email,
       ownerEmail:currentUser.email,
       date:photo.date,time:photo.time,caption:photo.caption||'',
-      amount:photo.amount||0,moneyType:photo.moneyType||null,
+      amount:photo.amount||0,moneyType:photo.moneyType||null,category:photo.category||null,
       url,createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     const p=photos.find(x=>x.id===photo.id);
@@ -622,7 +701,8 @@ function renderGallery(){
     const gc=dayPhotos.length===1?'solo':dayPhotos.length===2?'duo':'';
     const thumbs=dayPhotos.map(p=>{
       const badge=p.amount>0?`<div class="ph-amount ${p.moneyType}">${p.moneyType==='expense'?'-':'+'}${formatVND(p.amount)}</div>`:'';
-      return`<div class="photo-thumb" onclick="openViewer('${p.id}')"><img src="${p.dataUrl}" alt="" loading="lazy"><div class="ph-time">${p.time}</div>${badge}</div>`;
+      const catIcon=(p.amount>0&&p.category)?`<div class="ph-cat-icon">${getCatInfo(p.moneyType,p.category).icon}</div>`:'';
+      return`<div class="photo-thumb" onclick="openViewer('${p.id}')"><img src="${p.dataUrl}" alt="" loading="lazy"><div class="ph-time">${p.time}</div>${catIcon}${badge}</div>`;
     }).join('');
     const dayExpense=dayPhotos.filter(p=>p.moneyType==='expense').reduce((s,p)=>s+(p.amount||0),0);
     const dayIncome=dayPhotos.filter(p=>p.moneyType==='income').reduce((s,p)=>s+(p.amount||0),0);
@@ -659,7 +739,8 @@ function openViewer(id){
   const amountEl=document.getElementById('viewer-amount');
   if(amountEl){
     if(p.amount>0){
-      amountEl.textContent=`${p.moneyType==='expense'?'- ':'+ '}${formatVND(p.amount)}`;
+      const catLabel=p.category?` · ${getCatInfo(p.moneyType,p.category).icon} ${getCatInfo(p.moneyType,p.category).label}`:'';
+      amountEl.textContent=`${p.moneyType==='expense'?'- ':'+ '}${formatVND(p.amount)}${catLabel}`;
       amountEl.className=`viewer-amount ${p.moneyType}`;
       amountEl.style.display='inline-block';
     }else{
@@ -953,7 +1034,7 @@ function subscribeCloudPhotos(){
     .onSnapshot(snap=>{
       cloudPhotosCache=snap.docs.map(d=>{
         const p=d.data();
-        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
+        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
       });
       mergePhotos();
     },e=>console.error(e));
@@ -968,6 +1049,7 @@ function mergePhotos(){
   updateThumbPreview();
   if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
   if(document.getElementById('calendar-modal').classList.contains('open'))renderCalendar();
+  if(document.getElementById('s-stats').classList.contains('active'))renderStats();
 }
 
 function switchTab(tab){
@@ -978,6 +1060,99 @@ function switchTab(tab){
   if(tabEl)tabEl.classList.add('active');
   if(tab==='camera'){if(!stream)startCamera();}
   else if(tab==='gallery')renderGallery();
+  else if(tab==='stats')renderStats();
+}
+
+// ====== BUDGET ======
+const BUDGET_KEY='th_budget_v1';
+function getBudgets(){try{return JSON.parse(localStorage.getItem(BUDGET_KEY)||'{}')}catch(e){return{}}}
+function setBudgetForMonth(monthKey,amount){
+  const b=getBudgets();b[monthKey]=amount;
+  try{localStorage.setItem(BUDGET_KEY,JSON.stringify(b))}catch(e){}
+}
+function editBudget(monthKey){
+  const current=getBudgets()[monthKey]||'';
+  const val=prompt('Đặt ngân sách chi tiêu cho tháng này (đ):',current||'');
+  if(val===null)return;
+  const num=parseInt(val.replace(/[^\d]/g,''),10);
+  setBudgetForMonth(monthKey,isNaN(num)?0:num);
+  renderStats();
+}
+
+// ====== STATS ======
+let statsMonthOffset=0;
+function changeStatsMonth(delta){statsMonthOffset+=delta;renderStats();}
+function renderStats(){
+  const el=document.getElementById('s-stats');
+  if(!el)return;
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+statsMonthOffset,1);
+  const year=base.getFullYear(),month=base.getMonth();
+  const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const monthKey=`${year}-${String(month+1).padStart(2,'0')}`;
+  const monthPhotos=photos.filter(p=>p.date.startsWith(monthKey));
+  const expensePhotos=monthPhotos.filter(p=>p.moneyType==='expense'&&p.amount>0);
+  const incomePhotos=monthPhotos.filter(p=>p.moneyType==='income'&&p.amount>0);
+  const totalExpense=expensePhotos.reduce((s,p)=>s+p.amount,0);
+  const totalIncome=incomePhotos.reduce((s,p)=>s+p.amount,0);
+  const balance=totalIncome-totalExpense;
+
+  let html=`<div class="stats-month-nav">
+    <button class="cal-nav-btn" onclick="changeStatsMonth(-1)">‹</button>
+    <div class="stats-month-title">${monthNames[month]} ${year}</div>
+    <button class="cal-nav-btn" onclick="changeStatsMonth(1)">›</button>
+  </div>`;
+
+  html+=`<div class="stats-summary">
+    <div class="stats-card income"><div class="sc-label">Thu nhập</div><div class="sc-value">+${formatVND(totalIncome)}</div></div>
+    <div class="stats-card expense"><div class="sc-label">Chi tiêu</div><div class="sc-value">-${formatVND(totalExpense)}</div></div>
+    <div class="stats-card balance"><div class="sc-label">Số dư</div><div class="sc-value">${balance>=0?'+':''}${formatVND(balance)}</div></div>
+  </div>`;
+
+  const budget=getBudgets()[monthKey]||0;
+  if(budget>0){
+    const pct=Math.min(100,Math.round((totalExpense/budget)*100));
+    const over=totalExpense>budget;
+    html+=`<div class="budget-box">
+      <div class="budget-box-head"><strong>Ngân sách tháng</strong><span class="budget-edit-link" onclick="editBudget('${monthKey}')">Sửa</span></div>
+      <div class="budget-bar-track"><div class="budget-bar-fill${over?' over':''}" style="width:${pct}%"></div></div>
+      <div class="budget-info"><span>${over?'Đã vượt ngân sách!':`Đã dùng ${pct}%`}</span><span>${formatVND(totalExpense)} / ${formatVND(budget)}</span></div>
+    </div>`;
+  }else{
+    html+=`<div class="budget-box">
+      <div class="budget-box-head"><strong>Ngân sách tháng</strong><span class="budget-edit-link" onclick="editBudget('${monthKey}')">Đặt ngay</span></div>
+      <div class="budget-empty">Chưa đặt ngân sách cho tháng này</div>
+    </div>`;
+  }
+
+  if(expensePhotos.length){
+    const byCat={};
+    expensePhotos.forEach(p=>{
+      const cid=p.category||'khac';
+      byCat[cid]=(byCat[cid]||0)+p.amount;
+    });
+    const rows=Object.keys(byCat).map(cid=>({cid,total:byCat[cid]})).sort((a,b)=>b.total-a.total);
+    const maxVal=rows[0].total;
+    html+=`<div class="cat-stats-title">Chi tiêu theo danh mục</div>`;
+    rows.forEach(r=>{
+      const info=getCatInfo('expense',r.cid);
+      const pct=Math.round((r.total/maxVal)*100);
+      const share=totalExpense>0?Math.round((r.total/totalExpense)*100):0;
+      html+=`<div class="cat-stat-row">
+        <div class="cat-stat-icon">${info.icon}</div>
+        <div class="cat-stat-body">
+          <div class="cat-stat-top"><span class="csn">${info.label} <span style="color:var(--text3);font-weight:400">(${share}%)</span></span><span class="csv">${formatVND(r.total)}</span></div>
+          <div class="cat-stat-track"><div class="cat-stat-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if(!monthPhotos.length){
+    html+=`<div class="stats-empty"><div class="big-icon">📊</div><h3>Chưa có dữ liệu</h3><p>Chụp ảnh kèm số tiền để xem thống kê tháng này</p></div>`;
+  }
+
+  el.innerHTML=html;
 }
 
 let toastTimer;
