@@ -576,7 +576,7 @@ async function startCamera(){
               <div class="cat-pills" id="cat-pills"></div>
             </div>
           </div>
-          <input id="caption-input" type="text" placeholder="Thêm caption…" maxlength="80">
+          <input id="caption-input" type="text" placeholder="Thêm caption…" maxlength="80" oninput="onCaptionInput()">
           <div class="zoom-row">
             <div class="zoom-pill" onclick="setZoom(0.5,this)">0.5×</div>
             <div class="zoom-pill active" onclick="setZoom(1,this)">1×</div>
@@ -653,6 +653,7 @@ const EXPENSE_CATS=[
   {id:'hoa-don',icon:'🧾',label:'Hoá đơn'},
   {id:'giai-tri',icon:'🎮',label:'Giải trí'},
   {id:'suc-khoe',icon:'💊',label:'Sức khoẻ'},
+  {id:'vo-hinh',icon:'👻',label:'Chi phí vô hình'},
   {id:'khac',icon:'📦',label:'Khác'}
 ];
 const INCOME_CATS=[
@@ -665,7 +666,11 @@ function getCatInfo(type,catId){
   const list=getCatList(type);
   return list.find(c=>c.id===catId)||list[list.length-1];
 }
-let moneyType='expense',moneyRowOpen=false,selectedCategory='khac',capturedLocation=null;
+function defaultCategoryFor(type,captionVal){
+  if(type==='expense'&&(!captionVal||!captionVal.trim()))return 'vo-hinh';
+  return getCatList(type)[getCatList(type).length-1].id;
+}
+let moneyType='expense',moneyRowOpen=false,selectedCategory='khac',capturedLocation=null,categoryTouched=false;
 function renderCatPills(){
   const wrap=document.getElementById('cat-pills');
   if(!wrap)return;
@@ -673,14 +678,21 @@ function renderCatPills(){
   if(!list.find(c=>c.id===selectedCategory))selectedCategory=list[list.length-1].id;
   wrap.innerHTML=list.map(c=>`<div class="cat-pill${c.id===selectedCategory?' active':''}" onclick="selectCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
 }
+function onCaptionInput(){
+  if(categoryTouched||moneyType!=='expense')return;
+  const capEl=document.getElementById('caption-input');
+  selectedCategory=defaultCategoryFor(moneyType,capEl?capEl.value:'');
+  renderCatPills();
+}
 function selectCategory(id){
   selectedCategory=id;
+  categoryTouched=true;
   document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
   renderCatPills();
 }
 
 // ====== EXPENSE EDIT (thêm/sửa chi tiêu sau khi đã chụp ảnh) ======
-let eeId=null,eeMoneyType='expense',eeCategory='khac',eeLocation=null;
+let eeId=null,eeMoneyType='expense',eeCategory='khac',eeLocation=null,eeCaption='';
 function renderEeCatPills(){
   const wrap=document.getElementById('ee-cat-pills');
   if(!wrap)return;
@@ -693,7 +705,7 @@ function eeSetMoneyType(type,el){
   eeMoneyType=type;
   document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  eeCategory=getCatList(type)[getCatList(type).length-1].id;
+  eeCategory=defaultCategoryFor(type,eeCaption);
   renderEeCatPills();
 }
 function eeCaptureLocation(){
@@ -712,8 +724,9 @@ function eeCaptureLocation(){
 function openExpenseEdit(id){
   const p=photos.find(x=>x.id===id);if(!p)return;
   eeId=id;
+  eeCaption=p.caption||'';
   eeMoneyType=p.moneyType||'expense';
-  eeCategory=p.category||getCatList(eeMoneyType)[getCatList(eeMoneyType).length-1].id;
+  eeCategory=p.category||defaultCategoryFor(eeMoneyType,eeCaption);
   eeLocation=p.location||null;
   document.getElementById('ee-title').textContent=p.amount>0?'Sửa chi tiêu':'Thêm chi tiêu';
   document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===eeMoneyType));
@@ -761,6 +774,9 @@ function toggleMoneyRow(){
   if(fields)fields.style.display=moneyRowOpen?'flex':'none';
   if(toggle)toggle.classList.toggle('active',moneyRowOpen);
   if(moneyRowOpen){
+    categoryTouched=false;
+    const capEl=document.getElementById('caption-input');
+    selectedCategory=defaultCategoryFor(moneyType,capEl?capEl.value:'');
     renderCatPills();
     const inp=document.getElementById('amount-input');if(inp)setTimeout(()=>inp.focus(),50);
     const timeEl=document.getElementById('time-input');if(timeEl&&!timeEl.value)timeEl.value=toTimeStr(new Date());
@@ -783,12 +799,14 @@ function setMoneyType(type,el){
   moneyType=type;
   document.querySelectorAll('.money-type-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  selectedCategory=getCatList(type)[getCatList(type).length-1].id;
+  categoryTouched=false;
+  const capEl=document.getElementById('caption-input');
+  selectedCategory=defaultCategoryFor(type,capEl?capEl.value:'');
   renderCatPills();
 }
 function formatVND(n){return Number(n).toLocaleString('vi-VN')+'đ';}
 function resetMoneyRow(){
-  moneyRowOpen=false;moneyType='expense';selectedCategory='khac';capturedLocation=null;
+  moneyRowOpen=false;moneyType='expense';selectedCategory='khac';capturedLocation=null;categoryTouched=false;
   const fields=document.getElementById('money-fields');
   const toggle=document.getElementById('money-toggle');
   const amountEl=document.getElementById('amount-input');
