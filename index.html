@@ -137,6 +137,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .va-btn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .va-btn.delete{background:rgba(255,59,48,0.15);color:#FF3B30}
 .va-btn.share{background:var(--accent-dim);color:var(--accent)}
+.va-btn.expense-edit{background:linear-gradient(135deg,rgba(2,132,199,0.18),rgba(168,85,247,0.18));color:var(--accent)}
 /* STATS */
 #s-stats{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--safe-bottom) + 14px);gap:16px;align-items:stretch}
 #s-stats::-webkit-scrollbar{display:none}
@@ -188,6 +189,13 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .cd-row-loc{font-size:11px;color:var(--accent);text-decoration:none}
 .cd-row-amount{font-size:13px;font-weight:700;color:#ef4444;flex-shrink:0}
 .cd-empty{text-align:center;font-size:13px;color:var(--text3);padding:24px 0}
+.ee-input{flex:1;min-width:0;padding:9px 14px;border-radius:12px;border:1px solid var(--border);font-size:14px;font-weight:600;font-family:inherit;background:var(--surface2);color:var(--text);outline:none}
+#ee-time-input.ee-input{font-size:13px}
+.loc-pill.ee-loc{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.loc-pill.ee-loc.active{background:linear-gradient(135deg,#0284c7,#22c55e);border-color:transparent;color:#fff;font-weight:600}
+.loc-pill.ee-loc.loading{opacity:0.6}
+.cat-pills.cat-pills-light .cat-pill{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.cat-pills.cat-pills-light .cat-pill.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
 /* NAV */
 .bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
@@ -417,6 +425,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     <div class="viewer-amount" id="viewer-amount" style="display:none"></div>
     <a class="viewer-location" id="viewer-location" style="display:none" target="_blank" rel="noopener">📍 Xem trên Google Maps</a>
     <div class="viewer-actions">
+      <button class="va-btn expense-edit" id="viewer-expense-btn" onclick="openExpenseEdit(currentViewerId)">💰 Thêm chi tiêu</button>
       <button class="va-btn share" onclick="sharePhoto()">Chia sẻ</button>
       <button class="va-btn delete" onclick="deletePhoto()">Xoá</button>
     </div>
@@ -433,6 +442,31 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
     <div class="cd-list" id="cd-list"></div>
     <div class="cal-actions">
       <button class="cal-close-btn" style="flex:1" onclick="closeCatDetail()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<div id="expense-edit-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <div class="cal-title" id="ee-title">Thêm chi tiêu</div>
+      <button class="cal-nav-btn" onclick="closeExpenseEdit()">✕</button>
+    </div>
+    <div class="money-fields-row" style="margin-bottom:10px">
+      <div class="money-type" id="ee-money-type">
+        <button type="button" class="money-type-btn active" data-type="expense" onclick="eeSetMoneyType('expense',this)">Chi</button>
+        <button type="button" class="money-type-btn" data-type="income" onclick="eeSetMoneyType('income',this)">Thu</button>
+      </div>
+      <input id="ee-amount-input" type="number" inputmode="numeric" placeholder="Số tiền (đ)" class="ee-input">
+    </div>
+    <div class="cat-pills cat-pills-light" id="ee-cat-pills" style="margin-bottom:10px"></div>
+    <div class="money-fields-row" style="margin-bottom:14px">
+      <input id="ee-time-input" type="time" class="ee-input">
+      <div class="loc-pill ee-loc" id="ee-loc-pill" onclick="eeCaptureLocation()">📍 Lấy vị trí</div>
+    </div>
+    <div class="cal-actions">
+      <button class="cal-close-btn" style="flex:1" onclick="closeExpenseEdit()">Huỷ</button>
+      <button class="cal-view-btn" style="flex:1" onclick="saveExpenseEdit()">Lưu</button>
     </div>
   </div>
 </div>
@@ -644,6 +678,82 @@ function selectCategory(id){
   document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
   renderCatPills();
 }
+
+// ====== EXPENSE EDIT (thêm/sửa chi tiêu sau khi đã chụp ảnh) ======
+let eeId=null,eeMoneyType='expense',eeCategory='khac',eeLocation=null;
+function renderEeCatPills(){
+  const wrap=document.getElementById('ee-cat-pills');
+  if(!wrap)return;
+  const list=getCatList(eeMoneyType);
+  if(!list.find(c=>c.id===eeCategory))eeCategory=list[list.length-1].id;
+  wrap.innerHTML=list.map(c=>`<div class="cat-pill${c.id===eeCategory?' active':''}" onclick="eeSelectCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
+}
+function eeSelectCategory(id){eeCategory=id;renderEeCatPills();}
+function eeSetMoneyType(type,el){
+  eeMoneyType=type;
+  document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  eeCategory=getCatList(type)[getCatList(type).length-1].id;
+  renderEeCatPills();
+}
+function eeCaptureLocation(){
+  const pill=document.getElementById('ee-loc-pill');
+  if(!navigator.geolocation){showToast('Thiết bị không hỗ trợ định vị');return;}
+  if(pill){pill.classList.add('loading');pill.textContent='📍 Đang lấy vị trí…';}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    eeLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    if(pill){pill.classList.remove('loading');pill.classList.add('active');pill.textContent='📍 Đã lấy vị trí';}
+    showToast('Đã lấy vị trí hiện tại 📍');
+  },err=>{
+    if(pill){pill.classList.remove('loading');pill.textContent='📍 Lấy vị trí';}
+    showToast('Không lấy được vị trí. Kiểm tra quyền truy cập vị trí.');
+  },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+}
+function openExpenseEdit(id){
+  const p=photos.find(x=>x.id===id);if(!p)return;
+  eeId=id;
+  eeMoneyType=p.moneyType||'expense';
+  eeCategory=p.category||getCatList(eeMoneyType)[getCatList(eeMoneyType).length-1].id;
+  eeLocation=p.location||null;
+  document.getElementById('ee-title').textContent=p.amount>0?'Sửa chi tiêu':'Thêm chi tiêu';
+  document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===eeMoneyType));
+  document.getElementById('ee-amount-input').value=p.amount>0?p.amount:'';
+  document.getElementById('ee-time-input').value=p.time||toTimeStr(new Date());
+  const pill=document.getElementById('ee-loc-pill');
+  if(pill){
+    pill.classList.remove('loading');
+    if(eeLocation&&eeLocation.lat!=null){pill.classList.add('active');pill.textContent='📍 Đã lấy vị trí';}
+    else{pill.classList.remove('active');pill.textContent='📍 Lấy vị trí';}
+  }
+  renderEeCatPills();
+  document.getElementById('expense-edit-modal').classList.add('open');
+}
+function closeExpenseEdit(){
+  document.getElementById('expense-edit-modal').classList.remove('open');
+  eeId=null;
+}
+function saveExpenseEdit(){
+  const p=photos.find(x=>x.id===eeId);if(!p)return;
+  const amountRaw=document.getElementById('ee-amount-input').value.replace(/[^\d]/g,'');
+  const amount=amountRaw?parseInt(amountRaw,10):0;
+  const timeVal=document.getElementById('ee-time-input').value;
+  p.amount=amount;
+  p.moneyType=amount>0?eeMoneyType:null;
+  p.category=amount>0?eeCategory:null;
+  p.location=amount>0?eeLocation:null;
+  if(timeVal)p.time=timeVal;
+  savePhotos();
+  closeExpenseEdit();
+  if(currentViewerId===p.id)openViewer(p.id);
+  if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
+  if(document.getElementById('s-stats').classList.contains('active'))renderStats();
+  showToast(amount>0?`Đã lưu chi tiêu! ${p.moneyType==='expense'?'-':'+'}${formatVND(amount)}`:'Đã cập nhật!');
+  if(currentUser&&p.cloud){
+    db.collection('photos').doc(p.id).update({
+      time:p.time,amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null
+    }).catch(e=>console.error(e));
+  }
+}
 function toggleMoneyRow(){
   moneyRowOpen=!moneyRowOpen;
   const fields=document.getElementById('money-fields');
@@ -836,6 +946,8 @@ function openViewer(id){
   document.getElementById('vm-time').textContent=p.time;
   const d=new Date(p.date+'T00:00:00');
   document.getElementById('vm-date').textContent=`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  const expenseBtn=document.getElementById('viewer-expense-btn');
+  if(expenseBtn)expenseBtn.textContent=p.amount>0?'💰 Sửa chi tiêu':'💰 Thêm chi tiêu';
   const locEl=document.getElementById('viewer-location');
   if(locEl){
     if(p.location&&p.location.lat!=null){
