@@ -1825,6 +1825,27 @@ function renderStats(){
     });
   }
 
+  if(monthPhotos.length){
+    const allSorted=monthPhotos.filter(p=>p.amount>0).slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+    if(allSorted.length){
+      html+=`<div class="cat-stats-title" style="margin-top:22px">Chi tiết giao dịch (${allSorted.length})</div>
+      <div class="cd-list" style="max-height:none;margin-bottom:10px">${allSorted.map(p=>{
+        const info=getCatInfo(p.moneyType,p.category||'khac');
+        const d=new Date(p.date+'T00:00:00');
+        const dateLabel=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        const cap=p.caption?p.caption:info.label;
+        return`<div class="cd-row" onclick="openViewer('${p.id}')">
+          <div class="cd-row-thumb"><img src="${p.dataUrl}" alt="" loading="lazy"></div>
+          <div class="cd-row-body">
+            <div class="cd-row-cap">${info.icon} ${cap}</div>
+            <div class="cd-row-date">${dateLabel} · ${p.time}</div>
+          </div>
+          <div class="cd-row-amount" style="color:${p.moneyType==='expense'?'#ef4444':'#22c55e'}">${p.moneyType==='expense'?'-':'+'}${maskAmount(formatVND(p.amount))}</div>
+        </div>`;
+      }).join('')}</div>`;
+    }
+  }
+
   if(!monthPhotos.length){
     html+=`<div class="stats-empty"><div class="big-icon">📊</div><h3>Chưa có dữ liệu</h3><p>Chụp ảnh kèm số tiền để xem thống kê tháng này</p></div>`;
   }
