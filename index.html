@@ -126,6 +126,9 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .viewer-meta .vm-time{font-size:13px;color:rgba(255,255,255,0.7)}
 .viewer-meta .vm-date{font-size:11px;color:rgba(255,255,255,0.4)}
 .viewer-stage{flex:1;width:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
+.viewer-dots{display:none;justify-content:center;gap:5px;padding-bottom:8px}
+.vdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .15s}
+.vdot.active{background:#fff;width:16px;border-radius:3px}
 .viewer-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;transition:transform .15s ease;will-change:transform;user-select:none}
 .viewer-zoom-controls{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:5}
 .vz-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);border:0.5px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);font-family:inherit}
@@ -438,6 +441,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
       <div class="vm-date" id="vm-date"></div>
     </div>
   </div>
+  <div class="viewer-dots" id="viewer-dots"></div>
   <div class="viewer-stage" id="viewer-stage">
     <img id="viewer-img" src="" alt="" draggable="false" onpointerdown="viewerPointerDown(event)" onpointermove="viewerPointerMove(event)" onpointerup="viewerPointerUp(event)" onpointercancel="viewerPointerUp(event)">
     <div class="viewer-zoom-controls">
@@ -1192,7 +1196,7 @@ function renderMonthCalendarHtml(year,month){
     }else{
       inner=`<div class="cal-day-add" onclick="event.stopPropagation();openManualEntry(null,'${dateStr}')">+</div>`;
     }
-    const clickAttr=hasPhoto?` onclick="selectCalDay('${dateStr}')"`:'';
+    const clickAttr=hasPhoto?` onclick="calDayClick('${dateStr}')"`:'';
     grid+=`<div class="${cls}"${clickAttr}><div class="cal-day-num">${d}</div>${inner}</div>`;
   }
   let dayPhotosHtml='';
@@ -1229,7 +1233,16 @@ function calcStreak(){
   return streak;
 }
 
+let viewerList=[],viewerIndex=0;
 function openViewer(id){
+  const p=photos.find(x=>x.id===id);if(!p)return;
+  viewerList=photos.filter(x=>x.date===p.date).sort((a,b)=>a.time.localeCompare(b.time)).map(x=>x.id);
+  viewerIndex=viewerList.indexOf(id);
+  loadViewerPhoto(id);
+  document.getElementById('viewer').classList.add('open');
+}
+
+function loadViewerPhoto(id){
   const p=photos.find(x=>x.id===id);if(!p)return;
   currentViewerId=id;
   document.getElementById('viewer-img').src=p.dataUrl;
@@ -1260,10 +1273,26 @@ function openViewer(id){
       locEl.style.display='none';
     }
   }
-  document.getElementById('viewer').classList.add('open');
+  renderViewerDots();
 }
 
-function closeViewer(){document.getElementById('viewer').classList.remove('open');currentViewerId=null;viewerZoomReset();}
+function renderViewerDots(){
+  const el=document.getElementById('viewer-dots');
+  if(!el)return;
+  if(viewerList.length<=1){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='flex';
+  el.innerHTML=viewerList.map((vid,i)=>`<span class="vdot${i===viewerIndex?' active':''}"></span>`).join('');
+}
+
+function viewerGoTo(index){
+  if(index<0||index>=viewerList.length)return;
+  viewerIndex=index;
+  loadViewerPhoto(viewerList[viewerIndex]);
+}
+function viewerNext(){viewerGoTo(viewerIndex+1);}
+function viewerPrev(){viewerGoTo(viewerIndex-1);}
+
+function closeViewer(){document.getElementById('viewer').classList.remove('open');currentViewerId=null;viewerList=[];viewerIndex=0;viewerZoomReset();}
 
 // ====== VIEWER ZOOM / PAN ======
 let viewerZoom=1,viewerPanX=0,viewerPanY=0;
@@ -1303,6 +1332,7 @@ function viewerPointerDown(e){
       if(viewerZoom>1)viewerZoomReset();
       else{viewerZoom=2.5;applyViewerTransform();}
       vLastTap=0;
+      vDragStart=null;vPanStart=null;
       return;
     }
     vLastTap=now;
@@ -1329,10 +1359,19 @@ function viewerPointerMove(e){
   }
 }
 function viewerPointerUp(e){
+  let canSwipe=false,deltaX=0,deltaY=0;
+  if(vPointers.size===1&&viewerZoom<=1&&vDragStart){
+    deltaX=e.clientX-vDragStart.x;
+    deltaY=e.clientY-vDragStart.y;
+    canSwipe=true;
+  }
   vPointers.delete(e.pointerId);
   if(vPointers.size<2)vStartDist=0;
   vDragging=false;
   if(viewerZoom<=1){viewerPanX=0;viewerPanY=0;applyViewerTransform();}
+  if(canSwipe&&Math.abs(deltaX)>60&&Math.abs(deltaX)>Math.abs(deltaY)*1.5){
+    if(deltaX<0)viewerNext();else viewerPrev();
+  }
 }
 
 function deletePhoto(){
@@ -1395,6 +1434,14 @@ function getStreakDates(){
   return streakDates;
 }
 
+function calDayClick(dateStr){
+  const dayPhotos=photos.filter(p=>p.date===dateStr);
+  if(dayPhotos.length===1){
+    openViewer(dayPhotos[0].id);
+  }else{
+    selectCalDay(dateStr);
+  }
+}
 function selectCalDay(dateStr){
   selectedCalDate=selectedCalDate===dateStr?null:dateStr;
   renderGallery();
@@ -1788,6 +1835,12 @@ function showToast(msg){
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+document.addEventListener('keydown',(e)=>{
+  if(!document.getElementById('viewer').classList.contains('open'))return;
+  if(e.key==='ArrowRight')viewerNext();
+  else if(e.key==='ArrowLeft')viewerPrev();
+  else if(e.key==='Escape')closeViewer();
+});
 document.addEventListener('DOMContentLoaded',()=>{
   loadPhotos();
   localLegacyPhotos=photos.filter(p=>!p.ownerUid);
