@@ -231,6 +231,28 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .cal-month-title{font-size:15px;font-weight:600;color:var(--text)}
 .cal-day-add{width:100%;flex:1;min-height:0;border-radius:7px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px;cursor:pointer}
 .cal-day-add-link{font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;margin-left:6px}
+/* ANALYSIS */
+.an-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.an-month-title{font-size:15px;font-weight:600;color:var(--text)}
+.an-summary-row{display:flex;gap:10px;margin-bottom:18px}
+.an-donut-wrap{position:relative;display:flex;justify-content:center;margin-bottom:8px}
+.an-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.an-donut-center .an-dc-label{font-size:11px;color:var(--text2)}
+.an-donut-center .an-dc-val{font-size:16px;font-weight:700;color:var(--text);margin-top:2px}
+.an-legend{display:flex;flex-direction:column;gap:10px;margin-top:14px;margin-bottom:22px}
+.an-legend-row{display:flex;align-items:center;gap:10px;cursor:pointer}
+.an-legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.an-legend-body{flex:1;min-width:0}
+.an-legend-top{display:flex;justify-content:space-between;font-size:13px;color:var(--text)}
+.an-legend-sub{font-size:11.5px;color:var(--text3);margin-top:1px}
+.an-section-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.trend-bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin-bottom:6px}
+.trend-bar-col{flex:1;height:100%;display:flex;align-items:flex-end}
+.trend-bar{width:100%;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.trend-bar.over{background:#ef4444}
+.an-trend-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text3);margin-bottom:20px}
+.an-empty{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text2);text-align:center;padding:30px 10px}
+.an-empty .big-icon{font-size:44px}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
 .nav-icon{font-size:22px;color:var(--text3);transition:color .15s}
 .nav-icon.active{color:var(--accent)}
@@ -388,14 +410,31 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
     <div class="nav-item" onclick="switchTab('camera')">
       <div class="nav-cam-btn" id="nav-cam">📷</div>
     </div>
-    <div class="nav-item" onclick="showStreakInfo()">
-      <div class="nav-icon" id="nav-streak">🔥</div>
-      <div class="nav-label" id="navl-streak">Streak</div>
+    <div class="nav-item" onclick="openAnalysis()">
+      <div class="nav-icon" id="nav-analysis">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="20" x2="4" y2="12"></line>
+          <line x1="10" y1="20" x2="10" y2="6"></line>
+          <line x1="16" y1="20" x2="16" y2="14"></line>
+          <line x1="21" y1="20" x2="3" y2="20"></line>
+        </svg>
+      </div>
+      <div class="nav-label" id="navl-analysis">Phân tích</div>
     </div>
     <div class="nav-item" onclick="openFriendsPopup()">
       <div class="nav-icon" id="nav-profile">👤</div>
       <div class="nav-label" id="navl-profile">Bạn bè</div>
     </div>
+  </div>
+</div>
+
+<div id="analysis-modal" class="cal-modal">
+  <div class="cal-sheet" style="max-height:88vh;overflow-y:auto">
+    <div class="cal-header">
+      <div class="cal-title">📈 Phân tích chi tiêu</div>
+      <button class="cal-nav-btn" onclick="closeAnalysis()">✕</button>
+    </div>
+    <div id="analysis-body"></div>
   </div>
 </div>
 
@@ -1112,7 +1151,7 @@ function renderGallery(){
   </div>
   <div class="gh-status-row">
     <div class="gh-pill ${todayExpense>0?'warn':'good'}">${todayExpense>0?`🧾 Hôm nay đã chi ${formatVND(todayExpense)}`:'🌿 Hôm nay chưa chi tiêu'}</div>
-    <div class="gh-pill-sm">🔥 ${streak}</div>
+    <div class="gh-pill-sm" onclick="showStreakInfo()" style="cursor:pointer">🔥 ${streak}</div>
   </div>
   <div class="gh-toggle-row">
     <div class="gh-toggle">
@@ -1792,6 +1831,106 @@ function renderStats(){
 
   el.innerHTML=html;
   statsCache={monthNameLabel:`${monthNames[month]} ${year}`,expensePhotos};
+}
+
+// ====== SPENDING ANALYSIS (biểu đồ) ======
+let analysisMonthOffset=0;
+const AN_COLORS=['#3b82f6','#ef4444','#22c55e','#eab308','#a855f7','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
+function openAnalysis(){
+  analysisMonthOffset=0;
+  renderAnalysis();
+  document.getElementById('analysis-modal').classList.add('open');
+}
+function closeAnalysis(){document.getElementById('analysis-modal').classList.remove('open');}
+function changeAnalysisMonth(delta){analysisMonthOffset+=delta;renderAnalysis();}
+function buildDonutSvg(rows,total){
+  const size=180,r=68,cx=90,cy=90,sw=24,circumference=2*Math.PI*r;
+  let offset=0,circles='';
+  rows.forEach((row,i)=>{
+    const frac=row.total/total;
+    const dash=Math.max(frac*circumference,frac>0?1:0);
+    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${AN_COLORS[i%AN_COLORS.length]}" stroke-width="${sw}" stroke-dasharray="${dash} ${circumference-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    offset+=dash;
+  });
+  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${circles}</svg>`;
+}
+function renderAnalysis(){
+  const body=document.getElementById('analysis-body');
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+analysisMonthOffset,1);
+  const year=base.getFullYear(),month=base.getMonth();
+  const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const monthKey=`${year}-${String(month+1).padStart(2,'0')}`;
+  const monthPhotos=photos.filter(p=>p.date.startsWith(monthKey));
+  const expensePhotos=monthPhotos.filter(p=>p.moneyType==='expense'&&p.amount>0);
+  const incomePhotos=monthPhotos.filter(p=>p.moneyType==='income'&&p.amount>0);
+  const totalExpense=expensePhotos.reduce((s,p)=>s+p.amount,0);
+  const totalIncome=incomePhotos.reduce((s,p)=>s+p.amount,0);
+
+  let html=`<div class="an-month-nav">
+    <button class="cal-nav-btn" onclick="changeAnalysisMonth(-1)">‹</button>
+    <div class="an-month-title">${monthNames[month]} ${year}</div>
+    <button class="cal-nav-btn" onclick="changeAnalysisMonth(1)">›</button>
+  </div>
+  <div class="an-summary-row">
+    <div class="gh-summary-card expense"><div class="gh-summary-icon expense">↗</div><div class="gh-summary-body"><div class="gh-summary-label">Chi</div><div class="gh-summary-val">${maskAmount('-'+formatVND(totalExpense))}</div></div></div>
+    <div class="gh-summary-card income"><div class="gh-summary-icon income">↙</div><div class="gh-summary-body"><div class="gh-summary-label">Thu</div><div class="gh-summary-val">${maskAmount('+'+formatVND(totalIncome))}</div></div></div>
+  </div>`;
+
+  if(!expensePhotos.length){
+    html+=`<div class="an-empty"><div class="big-icon">📊</div><h3 style="color:var(--text)">Chưa có dữ liệu chi tiêu</h3><p>Chụp ảnh hoặc thêm chi tiêu thủ công để xem phân tích tháng này</p></div>`;
+    body.innerHTML=html;
+    return;
+  }
+
+  const byCat={};
+  expensePhotos.forEach(p=>{
+    const cid=p.category||'khac';
+    byCat[cid]=byCat[cid]||{total:0,count:0};
+    byCat[cid].total+=p.amount;
+    byCat[cid].count+=1;
+  });
+  const rows=Object.keys(byCat).map(cid=>({cid,total:byCat[cid].total,count:byCat[cid].count})).sort((a,b)=>b.total-a.total);
+
+  html+=`<div class="an-section-title">Chi tiêu theo danh mục</div>
+  <div class="an-donut-wrap">${buildDonutSvg(rows,totalExpense)}
+    <div class="an-donut-center"><div class="an-dc-label">Tổng chi</div><div class="an-dc-val">${maskAmount(formatVND(totalExpense))}</div></div>
+  </div>
+  <div class="an-legend">${rows.map((r,i)=>{
+    const info=getCatInfo('expense',r.cid);
+    const pct=totalExpense>0?Math.round((r.total/totalExpense)*100):0;
+    return`<div class="an-legend-row" onclick="closeAnalysis();openCatDetailFromAnalysis('${r.cid}','${monthKey}')">
+      <div class="an-legend-dot" style="background:${AN_COLORS[i%AN_COLORS.length]}"></div>
+      <div class="an-legend-body">
+        <div class="an-legend-top"><span>${info.icon} ${info.label}</span><span>${maskAmount(formatVND(r.total))}</span></div>
+        <div class="an-legend-sub">${pct}% · ${r.count} lần</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const perDay=new Array(daysInMonth+1).fill(0);
+  expensePhotos.forEach(p=>{const day=parseInt(p.date.slice(-2),10);perDay[day]=(perDay[day]||0)+p.amount;});
+  const maxDay=Math.max(...perDay,1);
+  const avgDay=totalExpense/daysInMonth;
+  let bars='';
+  for(let d=1;d<=daysInMonth;d++){
+    const h=Math.max(Math.round((perDay[d]/maxDay)*100),perDay[d]>0?4:0);
+    bars+=`<div class="trend-bar-col" title="${d}: ${formatVND(perDay[d])}"><div class="trend-bar${perDay[d]>avgDay*1.5?' over':''}" style="height:${h}%"></div></div>`;
+  }
+  html+=`<div class="an-section-title">Xu hướng chi tiêu theo ngày</div>
+  <div class="trend-bars">${bars}</div>
+  <div class="an-trend-labels"><span>1</span><span>${daysInMonth}</span></div>`;
+
+  body.innerHTML=html;
+}
+function openCatDetailFromAnalysis(cid,monthKey){
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+analysisMonthOffset,1);
+  const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const expensePhotos=photos.filter(p=>p.date.startsWith(monthKey)&&p.moneyType==='expense'&&p.amount>0);
+  statsCache={monthNameLabel:`${monthNames[base.getMonth()]} ${base.getFullYear()}`,expensePhotos};
+  openCatDetail(cid);
 }
 
 // ====== CATEGORY DETAIL ======
