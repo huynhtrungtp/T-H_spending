@@ -356,7 +356,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
   <div class="topbar">
     <div class="logo">T&amp;H<span>Spending</span></div>
     <div class="top-right">
-      <button class="icon-btn" onclick="exportPhotos()">💾</button>
+      <button class="icon-btn" id="topbar-avatar-btn" onclick="openFriendsPopup()" style="width:38px;height:38px;font-size:18px;overflow:hidden;padding:0">👤</button>
     </div>
   </div>
 
@@ -1147,7 +1147,6 @@ function renderGallery(){
       <div class="gh-greet">${greet} ${emoji}</div>
       <div class="gh-name">${currentUser?(currentUser.displayName||currentUser.email.split('@')[0]):'Bạn'}</div>
     </div>
-    <button class="icon-btn" onclick="openFriendsPopup()" style="width:44px;height:44px;font-size:20px;overflow:hidden">${currentUser&&currentUser.photoURL?`<img src="${currentUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`:'👤'}</button>
   </div>
   <div class="gh-status-row">
     <div class="gh-pill ${todayExpense>0?'warn':'good'}">${todayExpense>0?`🧾 Hôm nay đã chi ${formatVND(todayExpense)}`:'🌿 Hôm nay chưa chi tiêu'}</div>
@@ -1547,12 +1546,18 @@ async function migrateLocalPhotos(){
   showToast('Đã lưu ảnh lên cloud ☁️');
 }
 
+function renderTopbarAvatar(){
+  const btn=document.getElementById('topbar-avatar-btn');
+  if(!btn)return;
+  btn.innerHTML=(currentUser&&currentUser.photoURL)?`<img src="${currentUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`:'👤';
+}
 auth.onAuthStateChanged(async user=>{
   if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
   if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
   if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
   if(photosUnsub){photosUnsub();photosUnsub=null;}
   currentUser=user;
+  renderTopbarAvatar();
   if(!user){
     document.getElementById('login-screen').classList.remove('hide');
     friendUids=[];cloudPhotosCache=[];
