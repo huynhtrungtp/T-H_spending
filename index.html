@@ -264,6 +264,7 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .fr-row img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--surface2)}
 .fr-row-name{flex:1;font-size:13.5px;color:var(--text)}
 .fr-row-name small{display:block;color:var(--text3);font-size:11px}
+.fr-row-total{display:block;color:var(--text2);font-size:11.5px;margin-top:2px;font-weight:600}
 .fr-btn{padding:7px 12px;border-radius:10px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .fr-btn.accept{background:var(--accent);color:#fff}
 .fr-btn.decline{background:var(--surface2);color:var(--text2)}
@@ -880,6 +881,7 @@ function capturePhoto(){
   showToast(amount>0?`Đã lưu! 📸 ${finalMoneyType==='expense'?'-':'+'}${formatVND(amount)}`:'Đã lưu! 📸');
   if(currentUser)uploadPhotoToCloud(photo);
   else showToast('Chưa đăng nhập — ảnh chỉ lưu trên máy này');
+  syncMonthlyStatsToCloud();
 }
 
 async function uploadPhotoToCloud(photo){
@@ -904,6 +906,27 @@ async function uploadPhotoToCloud(photo){
 
 function toDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function toTimeStr(d){return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+
+// Friends can see this account's TOTAL income/expense for the current month —
+// nothing else. It's written to its own collection with no photos, captions,
+// categories, or per-transaction amounts, so detailed spending stays private.
+async function syncMonthlyStatsToCloud(){
+  if(!currentUser)return;
+  const monthKey=toDateStr(new Date()).slice(0,7);
+  let totalExpense=0,totalIncome=0;
+  photos.forEach(p=>{
+    if(!p.amount||!p.moneyType||!p.date||p.date.slice(0,7)!==monthKey)return;
+    if(p.moneyType==='expense')totalExpense+=p.amount;else totalIncome+=p.amount;
+  });
+  try{
+    await db.collection('monthlyStats').doc(currentUser.uid+'_'+monthKey).set({
+      ownerUid:currentUser.uid,
+      ownerName:currentUser.displayName||currentUser.email,
+      monthKey,totalExpense,totalIncome,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){console.error(e);}
+}
 
 function updateThumbPreview(){
   const p=document.getElementById('thumb-preview');
@@ -1297,7 +1320,9 @@ auth.onAuthStateChanged(async user=>{
   const avatarBtn=document.getElementById('user-avatar-btn');
   avatarBtn.innerHTML=user.photoURL?`<img src="${user.photoURL}" alt="">`:'<span>👤</span>';
   listenFriends();
+  subscribeCloudPhotos();
   migrateLocalPhotos();
+  syncMonthlyStatsToCloud();
   closeFriendsPopup();
 });
 
@@ -1365,7 +1390,6 @@ function updateFriendUids(list){
   friendUids=Array.from(new Set([currentUser.uid,...list]));
   friendsList=friendUids.filter(u=>u!==currentUser.uid);
   renderFriendsUI();
-  subscribeCloudPhotos();
 }
 
 function renderFriendsUI(){
@@ -1393,9 +1417,25 @@ function renderFriendsUI(){
   if(listEl){
     if(friendsList.length){
       listEl.innerHTML='<div class="fr-section-title">Bạn bè</div><div id="fr-list-inner">Đang tải...</div>';
-      Promise.all(friendsList.map(uid=>db.collection('users').doc(uid).get())).then(docs=>{
+      const monthKey=toDateStr(new Date()).slice(0,7);
+      Promise.all(friendsList.map(uid=>Promise.all([
+        db.collection('users').doc(uid).get(),
+        db.collection('monthlyStats').doc(uid+'_'+monthKey).get().catch(()=>null)
+      ]))).then(pairs=>{
         const inner=document.getElementById('fr-list-inner');
-        if(inner)inner.outerHTML=docs.map(d=>{const u=d.data()||{};return `<div class="fr-row">${u.photoURL?`<img src="${u.photoURL}" alt="">`:''}<div class="fr-row-name">${u.displayName||u.email}<small>${u.email||''}</small></div></div>`;}).join('');
+        if(!inner)return;
+        inner.outerHTML=pairs.map(([userDoc,statDoc])=>{
+          const u=userDoc.data()||{};
+          const s=(statDoc&&statDoc.exists)?statDoc.data():null;
+          let totalLine='<span class="fr-row-total">Chưa có dữ liệu tháng này</span>';
+          if(s){
+            const parts=[];
+            if(s.totalExpense)parts.push(`Chi -${formatVND(s.totalExpense)}`);
+            if(s.totalIncome)parts.push(`Thu +${formatVND(s.totalIncome)}`);
+            totalLine=`<span class="fr-row-total">${parts.length?parts.join(' · '):'Chưa chi tiêu gì tháng này'}</span>`;
+          }
+          return `<div class="fr-row">${u.photoURL?`<img src="${u.photoURL}" alt="">`:''}<div class="fr-row-name">${u.displayName||u.email}<small>${u.email||''}</small>${totalLine}</div></div>`;
+        }).join('');
       });
     }else{
       listEl.innerHTML='<div class="fr-section-title">Bạn bè</div><div class="fr-empty">Chưa có bạn bè nào được xác nhận</div>';
@@ -1407,10 +1447,12 @@ function openFriendsPopup(){document.getElementById('friends-modal').classList.a
 function closeFriendsPopup(){document.getElementById('friends-modal').classList.remove('open');}
 
 // ====== CLOUD PHOTOS ======
+// Each account only syncs its own photos now — friends are just contacts,
+// they no longer share a combined gallery/stats view.
 function subscribeCloudPhotos(){
   if(photosUnsub){photosUnsub();photosUnsub=null;}
-  if(!friendUids.length)return;
-  photosUnsub=db.collection('photos').where('ownerUid','in',friendUids.slice(0,10))
+  if(!currentUser)return;
+  photosUnsub=db.collection('photos').where('ownerUid','==',currentUser.uid)
     .onSnapshot(snap=>{
       cloudPhotosCache=snap.docs.map(d=>{
         const p=d.data();
@@ -1430,6 +1472,7 @@ function mergePhotos(){
   if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
   if(document.getElementById('calendar-modal').classList.contains('open'))renderCalendar();
   if(document.getElementById('s-stats').classList.contains('active'))renderStats();
+  if(currentUser)syncMonthlyStatsToCloud();
 }
 
 function switchTab(tab){
