@@ -1309,23 +1309,39 @@ async function sendFriendRequestFromInput(){
   const email=input.value.trim().toLowerCase();
   if(!email)return;
   if(currentUser&&email===currentUser.email.toLowerCase()){showToast('Không thể tự kết bạn với chính mình');return;}
-  const snap=await db.collection('users').where('email','==',email).limit(1).get();
-  if(snap.empty){showToast('Chưa tìm thấy người dùng — họ cần đăng nhập app ít nhất 1 lần');return;}
-  const toUid=snap.docs[0].id;
-  const key=pairKey(currentUser.uid,toUid);
-  const existing=await db.collection('friendRequests').where('pairKey','==',key).limit(1).get();
-  if(!existing.empty){showToast('Đã có lời mời giữa hai người rồi');return;}
-  await db.collection('friendRequests').add({
-    fromUid:currentUser.uid,fromEmail:currentUser.email,fromName:currentUser.displayName||currentUser.email,fromPhoto:currentUser.photoURL||'',
-    toUid,toEmail:email,pairKey:key,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  input.value='';
-  showToast('Đã gửi lời mời kết bạn');
+  try{
+    const snap=await db.collection('users').where('email','==',email).limit(1).get();
+    if(snap.empty){showToast('Chưa tìm thấy người dùng — họ cần đăng nhập app ít nhất 1 lần');return;}
+    const toUid=snap.docs[0].id;
+    const key=pairKey(currentUser.uid,toUid);
+    // Query each direction separately so each query matches the security rule's
+    // condition directly (fromUid==me, or toUid==me). Filtering by pairKey alone
+    // can't be proven safe by the rules engine and gets denied outright.
+    const[sentByMe,sentToMe]=await Promise.all([
+      db.collection('friendRequests').where('fromUid','==',currentUser.uid).where('toUid','==',toUid).limit(1).get(),
+      db.collection('friendRequests').where('fromUid','==',toUid).where('toUid','==',currentUser.uid).limit(1).get()
+    ]);
+    if(!sentByMe.empty||!sentToMe.empty){showToast('Đã có lời mời giữa hai người rồi');return;}
+    await db.collection('friendRequests').add({
+      fromUid:currentUser.uid,fromEmail:currentUser.email,fromName:currentUser.displayName||currentUser.email,fromPhoto:currentUser.photoURL||'',
+      toUid,toEmail:email,pairKey:key,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value='';
+    showToast('Đã gửi lời mời kết bạn');
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi gửi lời mời ('+(e.code||e.message||'không rõ')+')');
+  }
 }
 
 async function respondFriendRequest(reqId,accept){
-  await db.collection('friendRequests').doc(reqId).update({status:accept?'accepted':'declined'});
-  showToast(accept?'Đã chấp nhận kết bạn':'Đã từ chối lời mời');
+  try{
+    await db.collection('friendRequests').doc(reqId).update({status:accept?'accepted':'declined'});
+    showToast(accept?'Đã chấp nhận kết bạn':'Đã từ chối lời mời');
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi phản hồi lời mời ('+(e.code||e.message||'không rõ')+')');
+  }
 }
 
 function listenFriends(){
