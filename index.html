@@ -106,6 +106,10 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 .streak-info strong{font-size:14px;display:block}
 .streak-info span{font-size:12px;color:var(--text2)}
 .streak-num{font-size:28px;font-weight:700;color:var(--accent)}
+.manual-income-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(34,197,94,0.25)}
+#mi-date-input.ee-input{font-size:13px}
+.mi-note-input{width:100%;padding:9px 14px;border-radius:12px;border:1px solid var(--border);font-size:13.5px;font-weight:500;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;margin-bottom:10px}
+.mi-note-input::placeholder{color:var(--text3)}
 .day-block{flex-shrink:0}
 .day-header{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
 .day-name{font-size:15px;font-weight:600}
@@ -472,6 +476,31 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
   </div>
 </div>
 
+<div id="manual-income-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <div class="cal-title">💵 Thêm thu nhập thủ công</div>
+      <button class="cal-nav-btn" onclick="closeManualIncome()">✕</button>
+    </div>
+    <input id="mi-note-input" type="text" placeholder="Ghi chú (VD: Lương tháng 9, tiền thưởng...)" class="mi-note-input">
+    <div class="money-fields-row" style="margin-bottom:10px">
+      <input id="mi-amount-input" type="number" inputmode="numeric" placeholder="Số tiền (đ)" class="ee-input">
+    </div>
+    <div class="cat-pills cat-pills-light" id="mi-cat-pills" style="margin-bottom:10px"></div>
+    <div class="money-fields-row" style="margin-bottom:10px">
+      <input id="mi-date-input" type="date" class="ee-input">
+      <input id="mi-time-input" type="time" class="ee-input">
+    </div>
+    <div class="money-fields-row" style="margin-bottom:14px">
+      <div class="loc-pill ee-loc" id="mi-loc-pill" onclick="miCaptureLocation()" style="flex:1;justify-content:center">📍 Lấy vị trí (tuỳ chọn)</div>
+    </div>
+    <div class="cal-actions">
+      <button class="cal-close-btn" style="flex:1" onclick="closeManualIncome()">Huỷ</button>
+      <button class="cal-view-btn" style="flex:1;background:#22c55e" onclick="saveManualIncome()">Lưu thu nhập</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -766,6 +795,72 @@ function saveExpenseEdit(){
     }).catch(e=>console.error(e));
   }
 }
+
+// ====== MANUAL INCOME ENTRY (thu nhập không cần chụp ảnh, VD: lương chuyển khoản) ======
+let miCategory='luong',miLocation=null;
+function placeholderImage(type,icon){
+  const bg=type==='income'?'#22c55e':'#ef4444';
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="${bg}"/><text x="150" y="168" font-size="130" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">${icon}</text></svg>`;
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+}
+function renderMiCatPills(){
+  const wrap=document.getElementById('mi-cat-pills');
+  if(!wrap)return;
+  if(!INCOME_CATS.find(c=>c.id===miCategory))miCategory=INCOME_CATS[INCOME_CATS.length-1].id;
+  wrap.innerHTML=INCOME_CATS.map(c=>`<div class="cat-pill${c.id===miCategory?' active':''}" onclick="miSelectCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
+}
+function miSelectCategory(id){miCategory=id;renderMiCatPills();}
+function miCaptureLocation(){
+  const pill=document.getElementById('mi-loc-pill');
+  if(!navigator.geolocation){showToast('Thiết bị không hỗ trợ định vị');return;}
+  if(pill){pill.classList.add('loading');pill.textContent='📍 Đang lấy vị trí…';}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    miLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    if(pill){pill.classList.remove('loading');pill.classList.add('active');pill.textContent='📍 Đã lấy vị trí';}
+    showToast('Đã lấy vị trí hiện tại 📍');
+  },err=>{
+    if(pill){pill.classList.remove('loading');pill.textContent='📍 Lấy vị trí (tuỳ chọn)';}
+    showToast('Không lấy được vị trí. Kiểm tra quyền truy cập vị trí.');
+  },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+}
+function openManualIncome(){
+  miCategory='luong';miLocation=null;
+  document.getElementById('mi-note-input').value='';
+  document.getElementById('mi-amount-input').value='';
+  const now=new Date();
+  document.getElementById('mi-date-input').value=toDateStr(now);
+  document.getElementById('mi-time-input').value=toTimeStr(now);
+  const pill=document.getElementById('mi-loc-pill');
+  if(pill){pill.classList.remove('loading','active');pill.textContent='📍 Lấy vị trí (tuỳ chọn)';}
+  renderMiCatPills();
+  document.getElementById('manual-income-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mi-amount-input').focus(),50);
+}
+function closeManualIncome(){
+  document.getElementById('manual-income-modal').classList.remove('open');
+}
+function saveManualIncome(){
+  const amountRaw=document.getElementById('mi-amount-input').value.replace(/[^\d]/g,'');
+  const amount=amountRaw?parseInt(amountRaw,10):0;
+  if(amount<=0){showToast('Nhập số tiền hợp lệ nhé');return;}
+  const dateVal=document.getElementById('mi-date-input').value||toDateStr(new Date());
+  const timeVal=document.getElementById('mi-time-input').value||toTimeStr(new Date());
+  const caption=document.getElementById('mi-note-input').value.trim();
+  const catInfo=getCatInfo('income',miCategory);
+  const id=Date.now().toString();
+  const photo={id,dataUrl:placeholderImage('income',catInfo.icon),date:dateVal,time:timeVal,caption,amount,moneyType:'income',category:miCategory,location:miLocation,manual:true,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
+  photos.unshift(photo);
+  savePhotos();
+  updateThumbPreview();
+  closeManualIncome();
+  renderGallery();
+  if(document.getElementById('s-stats').classList.contains('active'))renderStats();
+  showToast(`Đã lưu thu nhập! +${formatVND(amount)}`);
+  if(currentUser)uploadPhotoToCloud(photo);
+  else showToast('Chưa đăng nhập — mục này chỉ lưu trên máy này');
+  syncMonthlyStatsToCloud();
+}
+
 function toggleMoneyRow(){
   moneyRowOpen=!moneyRowOpen;
   const fields=document.getElementById('money-fields');
@@ -937,13 +1032,16 @@ function updateThumbPreview(){
 function renderGallery(){
   const el=document.getElementById('s-gallery');
   if(photos.length===0){
-    el.innerHTML=`<div class="empty-gallery"><div class="big-icon">📷</div><h3>Chưa có ảnh nào</h3><p>Chụp ảnh đầu tiên ngay hôm nay!</p></div>`;
+    el.innerHTML=`<div class="empty-gallery"><div class="big-icon">📷</div><h3>Chưa có ảnh nào</h3><p>Chụp ảnh đầu tiên ngay hôm nay!</p><button class="manual-income-btn" onclick="openManualIncome()">💵 Thêm thu nhập thủ công</button></div>`;
     return;
   }
   const groups={};
   photos.forEach(p=>{if(!groups[p.date])groups[p.date]=[];groups[p.date].push(p);});
   const streak=calcStreak();
-  let html=`<div class="streak-bar"><div class="streak-fire">🔥</div><div class="streak-info"><strong>Chuỗi liên tiếp</strong><span>${streak>0?'Tiếp tục duy trì!':'Bắt đầu hôm nay!'}</span></div><div class="streak-num">${streak}</div></div>`;
+  let html=`<div style="display:flex;gap:10px;align-items:stretch">
+    <div class="streak-bar" style="flex:1"><div class="streak-fire">🔥</div><div class="streak-info"><strong>Chuỗi liên tiếp</strong><span>${streak>0?'Tiếp tục duy trì!':'Bắt đầu hôm nay!'}</span></div><div class="streak-num">${streak}</div></div>
+    <button class="manual-income-btn" onclick="openManualIncome()">💵 Thêm<br>thu nhập</button>
+  </div>`;
   const today=toDateStr(new Date());
   const yesterday=toDateStr(new Date(Date.now()-86400000));
   Object.keys(groups).sort().reverse().forEach(date=>{
