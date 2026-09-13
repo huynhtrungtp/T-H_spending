@@ -476,7 +476,6 @@ html,body{width:100%;height:100%;background:linear-gradient(135deg,#f0f9ff 0%,#e
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
 const STORAGE_KEY='snapday_v2';
@@ -493,7 +492,6 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
-const storage=firebase.storage();
 
 let currentUser=null;
 let friendUids=[];
@@ -820,6 +818,30 @@ function resetMoneyRow(){
   document.querySelectorAll('.money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type==='expense'));
 }
 
+// Firestore documents are capped at ~1MB total. Since photos are now stored as a
+// base64 string directly inside the document (no more Cloud Storage), shrink the
+// image until its data URL comfortably fits, leaving room for the other fields.
+function sizeDataUrlForFirestore(sourceCanvas,maxLen){
+  maxLen=maxLen||500000; // ~500KB base64 string ≈ ~375KB raw JPEG
+  let workCanvas=sourceCanvas;
+  let quality=0.75;
+  let dataUrl=workCanvas.toDataURL('image/jpeg',quality);
+  while(dataUrl.length>maxLen&&quality>0.3){
+    quality-=0.1;
+    dataUrl=workCanvas.toDataURL('image/jpeg',quality);
+  }
+  while(dataUrl.length>maxLen&&workCanvas.width>360){
+    const nc=document.createElement('canvas');
+    nc.width=Math.round(workCanvas.width*0.75);
+    nc.height=Math.round(workCanvas.height*0.75);
+    nc.getContext('2d').drawImage(workCanvas,0,0,nc.width,nc.height);
+    workCanvas=nc;
+    quality=0.7;
+    dataUrl=workCanvas.toDataURL('image/jpeg',quality);
+  }
+  return dataUrl;
+}
+
 function capturePhoto(){
   const video=document.getElementById('video');
   if(!video){showToast('Chưa bật camera');return;}
@@ -835,7 +857,7 @@ function capturePhoto(){
   const xOff=(video.videoWidth-size)/2;
   const yOff=(video.videoHeight-size)/2;
   ctx.drawImage(video,xOff,yOff,size,size,0,0,size,size);
-  const dataUrl=canvas.toDataURL('image/jpeg',0.82);
+  const dataUrl=sizeDataUrlForFirestore(canvas);
   const captionEl=document.getElementById('caption-input');
   const caption=captionEl?captionEl.value.trim():'';
   if(captionEl)captionEl.value='';
@@ -862,23 +884,21 @@ function capturePhoto(){
 
 async function uploadPhotoToCloud(photo){
   try{
-    const blob=await(await fetch(photo.dataUrl)).blob();
-    const ref=storage.ref().child(`photos/${currentUser.uid}/${photo.id}.jpg`);
-    await ref.put(blob);
-    const url=await ref.getDownloadURL();
+    // No Cloud Storage (requires the paid Blaze plan) — the compressed photo is
+    // stored directly as a base64 string inside the Firestore document instead.
     await db.collection('photos').doc(photo.id).set({
       ownerUid:currentUser.uid,
       ownerName:currentUser.displayName||currentUser.email,
       ownerEmail:currentUser.email,
       date:photo.date,time:photo.time,caption:photo.caption||'',
       amount:photo.amount||0,moneyType:photo.moneyType||null,category:photo.category||null,location:photo.location||null,
-      url,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      photoData:photo.dataUrl,createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     const p=photos.find(x=>x.id===photo.id);
     if(p){p.cloud=true;savePhotos();}
   }catch(e){
     console.error(e);
-    showToast('Lỗi tải ảnh lên cloud, ảnh vẫn còn trên máy');
+    showToast('Lỗi tải ảnh lên cloud ('+(e.code||e.message||'không rõ')+'), ảnh vẫn còn trên máy');
   }
 }
 
@@ -1199,14 +1219,43 @@ function openPhotoFromCal(id){
 }
 
 // ====== AUTH ======
+function isStandalonePWA(){
+  return window.navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches;
+}
 function signInGoogle(){
   const provider=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e=>showToast('Đăng nhập thất bại: '+e.message));
+  // signInWithPopup does not work reliably in an installed (standalone) PWA on iOS/Android —
+  // the popup window loses its opener context, so login (and therefore cloud sync) silently fails.
+  if(isStandalonePWA()){
+    auth.signInWithRedirect(provider).catch(e=>{console.error(e);showToast('Đăng nhập thất bại: '+(e.code||e.message));});
+    return;
+  }
+  auth.signInWithPopup(provider).catch(e=>{
+    console.error(e);
+    if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'||e.code==='auth/popup-closed-by-user'){
+      auth.signInWithRedirect(provider).catch(e2=>{console.error(e2);showToast('Đăng nhập thất bại: '+(e2.code||e2.message));});
+    }else{
+      showToast('Đăng nhập thất bại: '+(e.code||e.message));
+    }
+  });
 }
 function signInFacebook(){
   const provider=new firebase.auth.FacebookAuthProvider();
-  auth.signInWithPopup(provider).catch(e=>showToast('Đăng nhập thất bại: '+e.message));
+  if(isStandalonePWA()){
+    auth.signInWithRedirect(provider).catch(e=>{console.error(e);showToast('Đăng nhập thất bại: '+(e.code||e.message));});
+    return;
+  }
+  auth.signInWithPopup(provider).catch(e=>{
+    console.error(e);
+    if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'||e.code==='auth/popup-closed-by-user'){
+      auth.signInWithRedirect(provider).catch(e2=>{console.error(e2);showToast('Đăng nhập thất bại: '+(e2.code||e2.message));});
+    }else{
+      showToast('Đăng nhập thất bại: '+(e.code||e.message));
+    }
+  });
 }
+// Catch the result of a redirect-based sign-in (needed for the standalone-PWA path above)
+auth.getRedirectResult().catch(e=>{console.error(e);if(e&&e.code)showToast('Đăng nhập thất bại: '+e.code);});
 function signOutUser(){
   auth.signOut();
 }
@@ -1349,10 +1398,10 @@ function subscribeCloudPhotos(){
     .onSnapshot(snap=>{
       cloudPhotosCache=snap.docs.map(d=>{
         const p=d.data();
-        return{id:d.id,dataUrl:p.url,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
+        return{id:d.id,dataUrl:p.photoData,date:p.date,time:p.time,caption:p.caption||'',amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null,ownerUid:p.ownerUid,ownerName:p.ownerName,cloud:true};
       });
       mergePhotos();
-    },e=>console.error(e));
+    },e=>{console.error(e);showToast('Lỗi đồng bộ ảnh cloud ('+(e.code||e.message||'không rõ')+')');});
 }
 
 function mergePhotos(){
