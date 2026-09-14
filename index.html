@@ -587,6 +587,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
+let toastTimer;
 const STORAGE_KEY='snapday_v2';
 
 // ====== FIREBASE CONFIG — dán config project của bạn vào đây ======
@@ -598,9 +599,15 @@ const firebaseConfig={
   messagingSenderId:"958519005101",
   appId:"1:958519005101:web:596c494b8d563d2dc69b24"
 };
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
+let firebaseOk=true;
+try{
+  firebase.initializeApp(firebaseConfig);
+}catch(e){
+  firebaseOk=false;
+  console.error('Firebase init thất bại — app sẽ chạy ở chế độ chỉ xem ảnh trên máy:',e);
+}
+const auth=firebaseOk?firebase.auth():null;
+const db=firebaseOk?firebase.firestore():null;
 
 let currentUser=null;
 let friendUids=[];
@@ -1541,7 +1548,7 @@ function signInFacebook(){
   });
 }
 // Catch the result of a redirect-based sign-in (needed for the standalone-PWA path above)
-auth.getRedirectResult().catch(e=>{console.error(e);if(e&&e.code)showToast('Đăng nhập thất bại: '+e.code);});
+if(auth)auth.getRedirectResult().catch(e=>{console.error(e);if(e&&e.code)showToast('Đăng nhập thất bại: '+e.code);});
 function signOutUser(){
   auth.signOut();
 }
@@ -1561,23 +1568,24 @@ async function migrateLocalPhotos(){
   showToast('Đã lưu ảnh lên cloud ☁️');
 }
 
-auth.onAuthStateChanged(async user=>{
-  if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
-  if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
-  if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
-  if(photosUnsub){photosUnsub();photosUnsub=null;}
-  currentUser=user;
-  if(!user){
-    document.getElementById('login-screen').classList.remove('hide');
-    friendUids=[];cloudPhotosCache=[];
-    mergePhotos();
-    return;
-  }
-  document.getElementById('login-screen').classList.add('hide');
-  await db.collection('users').doc(user.uid).set({
-    email:(user.email||'').toLowerCase(),
-    displayName:user.displayName||'',
-    photoURL:user.photoURL||'',
+if(auth){
+  auth.onAuthStateChanged(async user=>{
+    if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
+    if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
+    if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
+    if(photosUnsub){photosUnsub();photosUnsub=null;}
+    currentUser=user;
+    if(!user){
+      document.getElementById('login-screen').classList.remove('hide');
+      friendUids=[];cloudPhotosCache=[];
+      mergePhotos();
+      return;
+    }
+    document.getElementById('login-screen').classList.add('hide');
+    await db.collection('users').doc(user.uid).set({
+      email:(user.email||'').toLowerCase(),
+      displayName:user.displayName||'',
+      photoURL:user.photoURL||'',
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   },{merge:true});
   if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
@@ -1586,7 +1594,14 @@ auth.onAuthStateChanged(async user=>{
   migrateLocalPhotos();
   syncMonthlyStatsToCloud();
   closeFriendsPopup();
-});
+  });
+}else{
+  // Firebase failed to load (blocked network, ad-blocker, CDN issue, etc).
+  // Don't leave the person stuck behind the login screen forever — let them
+  // keep using the app with whatever photos are already saved on this device.
+  document.getElementById('login-screen').classList.add('hide');
+  showToast('Không kết nối được máy chủ đăng nhập — bạn vẫn xem được ảnh đã lưu trên máy này.');
+}
 
 // ====== FRIENDS ======
 function pairKey(a,b){return[a,b].sort().join('_');}
@@ -2019,7 +2034,6 @@ function closeCatDetail(){
   document.getElementById('catdetail-modal').classList.remove('open');
 }
 
-let toastTimer;
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
