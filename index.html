@@ -565,6 +565,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
       <div class="cal-title" id="ee-title">Thêm chi tiêu</div>
       <button class="cal-nav-btn" onclick="closeExpenseEdit()">✕</button>
     </div>
+    <input id="ee-caption-input" type="text" placeholder="Ghi chú (VD: Ăn trưa, đổ xăng...)" class="mi-note-input" style="margin-bottom:10px">
     <div class="money-fields-row" style="margin-bottom:10px">
       <div class="money-type" id="ee-money-type">
         <button type="button" class="money-type-btn active" data-type="expense" onclick="eeSetMoneyType('expense',this)">Chi</button>
@@ -921,6 +922,7 @@ function openExpenseEdit(id){
   eeCategory=p.category||defaultCategoryFor(eeMoneyType,eeCaption);
   eeLocation=p.location||null;
   document.getElementById('ee-title').textContent=p.amount>0?'Sửa chi tiêu':'Thêm chi tiêu';
+  document.getElementById('ee-caption-input').value=eeCaption;
   document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===eeMoneyType));
   document.getElementById('ee-amount-input').value=p.amount>0?p.amount:'';
   document.getElementById('ee-time-input').value=p.time||toTimeStr(new Date());
@@ -942,10 +944,12 @@ function saveExpenseEdit(){
   const amountRaw=document.getElementById('ee-amount-input').value.replace(/[^\d]/g,'');
   const amount=amountRaw?parseInt(amountRaw,10):0;
   const timeVal=document.getElementById('ee-time-input').value;
+  const captionVal=document.getElementById('ee-caption-input').value.trim();
   p.amount=amount;
   p.moneyType=amount>0?eeMoneyType:null;
   p.category=amount>0?eeCategory:null;
   p.location=amount>0?eeLocation:null;
+  p.caption=captionVal;
   if(timeVal)p.time=timeVal;
   savePhotos();
   closeExpenseEdit();
@@ -955,7 +959,7 @@ function saveExpenseEdit(){
   showToast(amount>0?`Đã lưu chi tiêu! ${p.moneyType==='expense'?'-':'+'}${formatVND(amount)}`:'Đã cập nhật!');
   if(currentUser&&p.cloud){
     db.collection('photos').doc(p.id).update({
-      time:p.time,amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null
+      time:p.time,amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null,caption:p.caption||''
     }).catch(e=>console.error(e));
   }
 }
