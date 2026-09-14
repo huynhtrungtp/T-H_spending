@@ -6,7 +6,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="T&H Spending">
-<meta name="theme-color" content="#0D0D0F">
+<meta name="theme-color" content="#0D0D0F" id="meta-theme-color">
+<script>
+// Apply saved theme before first paint to avoid a flash of the wrong colors.
+(function(){
+  try{
+    var t=localStorage.getItem('th_theme');
+    if(t==='warm'){
+      document.documentElement.setAttribute('data-theme','warm');
+      var m=document.getElementById('meta-theme-color');
+      if(m)m.setAttribute('content','#FBEEDC');
+    }
+  }catch(e){}
+})();
+</script>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +27,15 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>T&H Spending</title>
 <style>
-:root{--bg:#0d0d0f;--surface:#1c1c1f;--surface2:#28282c;--border:#3a3a40;--accent:#3b82f6;--accent-dim:rgba(59,130,246,0.16);--text:#f5f5f7;--text2:#a1a1aa;--text3:#6b6b72;--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
+:root{--bg:#0d0d0f;--surface:#1c1c1f;--surface2:#28282c;--border:#3a3a40;--accent:#3b82f6;--accent2:#a855f7;--accent-rgb:59,130,246;--accent2-rgb:168,85,247;--accent-dim:rgba(59,130,246,0.16);--text:#f5f5f7;--text2:#a1a1aa;--text3:#6b6b72;--nav-bg:rgba(20,20,23,0.85);--card-shadow:rgba(0,0,0,0.5);--safe-top:env(safe-area-inset-top,44px);--safe-bottom:env(safe-area-inset-bottom,20px)}
+:root[data-theme="warm"]{--bg:#FBEEDC;--surface:#FFFFFF;--surface2:#FFF6E8;--border:#EAD6B0;--accent:#F5A623;--accent2:#FF7A45;--accent-rgb:245,166,35;--accent2-rgb:255,122,69;--accent-dim:rgba(245,166,35,0.16);--text:#4A3826;--text2:#8A6F52;--text3:#C2A981;--nav-bg:rgba(255,255,255,0.9);--card-shadow:rgba(120,90,40,0.18)}
+:root[data-theme="peach"]{--bg:#FFF0F3;--surface:#FFFFFF;--surface2:#FFE4EC;--border:#FFCBDA;--accent:#FF8FAB;--accent2:#FFB4A2;--accent-rgb:255,143,171;--accent2-rgb:255,180,162;--accent-dim:rgba(255,143,171,0.16);--text:#5C3A45;--text2:#A9727F;--text3:#DCAAB8;--nav-bg:rgba(255,255,255,0.9);--card-shadow:rgba(255,143,171,0.2)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-family:'Be Vietnam Pro',-apple-system,sans-serif;overflow:hidden;position:fixed;display:flex;justify-content:center}
-#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,0.5);position:relative}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Be Vietnam Pro',-apple-system,sans-serif;overflow:hidden;position:fixed;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;box-shadow:0 0 40px var(--card-shadow);position:relative}
 .topbar{padding:calc(var(--safe-top) + 6px) 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:transparent}
-.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#f5f5f7 0%,#a1a1aa 40%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.logo span{background:linear-gradient(135deg,#0369a1 0%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--text) 0%,var(--text2) 40%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo span{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .top-right{display:flex;gap:10px}
 .icon-btn{width:36px;height:36px;border-radius:50%;background:var(--surface);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--text)}
 .screen{flex:1;overflow:hidden;display:none;flex-direction:column}
@@ -39,17 +54,17 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 #caption-input::placeholder{color:rgba(255,255,255,0.35)}
 .money-row{margin-bottom:10px}
 .money-toggle{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:20px;padding:7px 14px;font-size:12.5px;color:rgba(255,255,255,0.85);cursor:pointer;backdrop-filter:blur(8px);width:fit-content}
-.money-toggle.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
+.money-toggle.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;font-weight:600}
 .money-fields{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .money-fields-row{display:flex;gap:8px}
 #time-input{flex:1;min-width:0;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;color:#fff;font-family:inherit;backdrop-filter:blur(8px);outline:none;color-scheme:dark}
 .loc-pill{flex-shrink:0;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:9px 14px;font-size:12.5px;color:rgba(255,255,255,0.85);cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;font-family:inherit}
-.loc-pill.active{background:linear-gradient(135deg,#0284c7,#22c55e);border-color:transparent;color:#fff;font-weight:600}
+.loc-pill.active{background:linear-gradient(135deg,var(--accent),#22c55e);border-color:transparent;color:#fff;font-weight:600}
 .loc-pill.loading{opacity:0.6}
 .cat-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 .cat-pills::-webkit-scrollbar{display:none}
 .cat-pill{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.15);border-radius:14px;padding:6px 10px;font-size:11.5px;color:rgba(255,255,255,0.75);cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;font-family:inherit}
-.cat-pill.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
+.cat-pill.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;font-weight:600}
 .ph-cat-icon{position:absolute;top:5px;left:5px;font-size:14px;background:rgba(0,0,0,0.45);border-radius:8px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .viewer-cat{display:inline-block;margin-left:8px;font-size:12px;color:rgba(255,255,255,0.6)}
 .money-type{display:flex;background:rgba(0,0,0,0.5);border-radius:12px;padding:3px;gap:2px;border:0.5px solid rgba(255,255,255,0.15);flex-shrink:0}
@@ -71,7 +86,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .viewer-amount.income{background:#22c55e}
 .zoom-row{display:flex;justify-content:center;gap:6px}
 .zoom-pill{background:rgba(0,0,0,0.5);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 11px;font-size:12px;color:rgba(255,255,255,0.55);font-weight:500;cursor:pointer;backdrop-filter:blur(4px);transition:all .15s}
-.zoom-pill.active{color:var(--accent);border-color:rgba(2,132,199,0.5)}
+.zoom-pill.active{color:var(--accent);border-color:rgba(var(--accent-rgb),0.5)}
 .shutter-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 0;flex-shrink:0}
 .thumb-preview{width:48px;height:48px;border-radius:12px;border:2px solid var(--border);background:var(--surface);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3)}
 .thumb-preview img{width:100%;height:100%;object-fit:cover}
@@ -129,6 +144,11 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .viewer-dots{display:none;justify-content:center;gap:5px;padding-bottom:8px}
 .vdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .15s}
 .vdot.active{background:#fff;width:16px;border-radius:3px}
+.vdot-count{font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:10px}
+.viewer-nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:none;background:rgba(0,0,0,0.35);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5}
+.viewer-nav-btn.left{left:10px}
+.viewer-nav-btn.right{right:10px}
+.viewer-nav-btn:disabled{opacity:0;pointer-events:none}
 .viewer-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;transition:transform .15s ease;will-change:transform;user-select:none}
 .viewer-zoom-controls{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:5}
 .vz-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);border:0.5px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);font-family:inherit}
@@ -140,7 +160,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .va-btn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .va-btn.delete{background:rgba(255,59,48,0.15);color:#FF3B30}
 .va-btn.share{background:var(--accent-dim);color:var(--accent)}
-.va-btn.expense-edit{background:linear-gradient(135deg,rgba(2,132,199,0.18),rgba(168,85,247,0.18));color:var(--accent)}
+.va-btn.expense-edit{background:linear-gradient(135deg,rgba(var(--accent-rgb),0.18),rgba(var(--accent2-rgb),0.18));color:var(--accent)}
 /* STATS */
 #s-stats{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--safe-bottom) + 14px);gap:16px;align-items:stretch}
 #s-stats::-webkit-scrollbar{display:none}
@@ -158,7 +178,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .budget-box-head strong{font-size:13.5px}
 .budget-edit-link{font-size:12px;color:var(--accent);cursor:pointer;font-weight:600}
 .budget-bar-track{width:100%;height:10px;border-radius:6px;background:var(--surface2);overflow:hidden;margin-bottom:6px}
-.budget-bar-fill{height:100%;border-radius:6px;background:linear-gradient(135deg,#0284c7,#a855f7);transition:width .3s ease}
+.budget-bar-fill{height:100%;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:width .3s ease}
 .budget-bar-fill.over{background:linear-gradient(135deg,#ef4444,#f97316)}
 .budget-info{font-size:12px;color:var(--text2);display:flex;justify-content:space-between}
 .budget-empty{font-size:12.5px;color:var(--text3)}
@@ -170,7 +190,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .cat-stat-top .csn{font-weight:600;color:var(--text)}
 .cat-stat-top .csv{font-weight:700;color:var(--text)}
 .cat-stat-track{width:100%;height:6px;border-radius:4px;background:var(--surface2);overflow:hidden}
-.cat-stat-fill{height:100%;border-radius:4px;background:linear-gradient(135deg,#0284c7,#a855f7)}
+.cat-stat-fill{height:100%;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .stats-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text2);text-align:center;padding:40px 20px}
 .stats-empty .big-icon{font-size:48px}
 .cat-stat-row{cursor:pointer;transition:transform .1s ease}
@@ -195,13 +215,13 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .ee-input{flex:1;min-width:0;padding:9px 14px;border-radius:12px;border:1px solid var(--border);font-size:14px;font-weight:600;font-family:inherit;background:var(--surface2);color:var(--text);outline:none}
 #ee-time-input.ee-input{font-size:13px}
 .loc-pill.ee-loc{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
-.loc-pill.ee-loc.active{background:linear-gradient(135deg,#0284c7,#22c55e);border-color:transparent;color:#fff;font-weight:600}
+.loc-pill.ee-loc.active{background:linear-gradient(135deg,var(--accent),#22c55e);border-color:transparent;color:#fff;font-weight:600}
 .loc-pill.ee-loc.loading{opacity:0.6}
 .cat-pills.cat-pills-light .cat-pill{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
-.cat-pills.cat-pills-light .cat-pill.active{background:linear-gradient(135deg,#0284c7,#a855f7);border-color:transparent;color:#fff;font-weight:600}
+.cat-pills.cat-pills-light .cat-pill.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;font-weight:600}
 /* NAV */
-.bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:rgba(20,20,23,0.85);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
-.fab-add{display:none;position:absolute;right:18px;bottom:calc(var(--safe-bottom) + 92px);width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.45);z-index:60;align-items:center;justify-content:center}
+.bottom-nav{display:flex;padding:8px 0 calc(var(--safe-bottom) + 6px);background:var(--nav-bg);backdrop-filter:blur(10px);border-top:0.5px solid var(--border);flex-shrink:0}
+.fab-add{display:none;position:absolute;right:18px;bottom:calc(var(--safe-bottom) + 92px);width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(var(--accent-rgb),0.45);z-index:60;align-items:center;justify-content:center}
 .fab-sheet-list{display:flex;flex-direction:column;gap:10px}
 .fab-sheet-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:16px;padding:12px 14px;cursor:pointer}
 .fab-sheet-icon{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
@@ -258,7 +278,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .nav-icon.active{color:var(--accent)}
 .nav-label{font-size:10px;color:var(--text3);transition:color .15s}
 .nav-label.active{color:var(--accent)}
-.nav-cam-btn{width:50px;height:50px;border-radius:17px;background:linear-gradient(135deg,#0284c7,#a855f7);display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-12px;box-shadow:0 4px 16px rgba(2,132,199,0.35)}
+.nav-cam-btn{width:50px;height:50px;border-radius:17px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-12px;box-shadow:0 4px 16px rgba(var(--accent-rgb),0.35)}
 /* CALENDAR POPUP */
 .cal-modal{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
 .cal-modal.open{display:flex}
@@ -278,7 +298,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .cal-day-num{font-size:11px;color:var(--text2);width:18px;height:18px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .cal-day.today .cal-day-num{box-shadow:inset 0 0 0 1.5px var(--accent);font-weight:700;color:var(--text)}
 .cal-day.has-photo .cal-day-num{background:var(--accent-dim);color:var(--accent);font-weight:600}
-.cal-day.streak-day .cal-day-num{background:linear-gradient(135deg,#0284c7,#a855f7);color:#fff;font-weight:700}
+.cal-day.streak-day .cal-day-num{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700}
 .cal-day-thumb-wrap{width:100%;flex:1;min-height:0;border-radius:7px;overflow:hidden;background:var(--surface2)}
 .cal-day-thumb-wrap img{width:100%;height:100%;object-fit:contain;display:block}
 .cal-day.has-photo,.cal-day.streak-day{cursor:pointer}
@@ -294,9 +314,9 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 .cal-close-btn{padding:12px 18px;border-radius:12px;border:none;background:var(--surface2);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .nav-icon svg{display:block}
 /* LOGIN */
-.login-screen{position:fixed;inset:0;z-index:500;background:#0d0d0f;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-screen{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
 .login-screen.hide{display:none}
-.login-card{background:var(--surface);border-radius:24px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(2,132,199,0.15)}
+.login-card{background:var(--surface);border-radius:24px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(var(--accent-rgb),0.15)}
 .login-logo{font-size:44px;margin-bottom:10px}
 .login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:10px}
 .login-title span{color:var(--accent)}
@@ -325,11 +345,25 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,35,0.95);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;backdrop-filter:blur(12px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* THEME PICKER */
+.theme-picker-box{display:flex;gap:14px;background:var(--surface2);border-radius:16px;padding:14px;flex-wrap:wrap}
+.theme-swatch-btn{display:flex;flex-direction:column;align-items:center;gap:6px;background:transparent;border:none;cursor:pointer;font-family:inherit;flex:1;min-width:64px}
+.theme-swatch-circle{position:relative;width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);border:2.5px solid transparent}
+.theme-swatch-btn.active .theme-swatch-circle{border-color:var(--accent)}
+.theme-swatch-check{position:absolute;bottom:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface2)}
+.theme-swatch-label{font-size:11px;color:var(--text2);text-align:center;line-height:1.3}
+.theme-swatch-btn.active .theme-swatch-label{color:var(--text);font-weight:600}
 /* INSTALL BANNER */
 .install-banner{background:var(--surface);border:0.5px solid var(--accent-dim);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin:10px 14px 0;flex-shrink:0}
 .install-banner .ib-icon{font-size:22px}
 .install-banner .ib-text{flex:1;font-size:12px;color:var(--text2);line-height:1.4}
 .install-banner .ib-close{font-size:18px;color:var(--text3);cursor:pointer;padding:4px}
+.login-safari-note{display:none;margin-top:18px;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.login-safari-note.show{display:block}
+.login-safari-note p{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+.login-safari-note .lsn-link-row{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+.login-safari-note .lsn-link-row input{flex:1;min-width:0;border:none;background:transparent;font-size:11.5px;color:var(--text2);font-family:inherit;outline:none}
+.login-safari-note .lsn-copy-btn{flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -349,15 +383,19 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
       Đăng nhập với Facebook
     </button>
     <p class="login-note">Ảnh và dữ liệu chi tiêu sẽ được tự động sao lưu lên cloud sau khi đăng nhập.</p>
+    <div class="login-safari-note" id="login-safari-note">
+      <p>📱 iOS chặn đăng nhập ngay trong app đã ghim ở màn hình chính. Hãy mở <b>Safari</b> (không phải icon app này), dán link bên dưới vào thanh địa chỉ rồi đăng nhập ở đó — xong thì quay lại mở icon app trên màn hình chính, bạn sẽ tự động đã đăng nhập.</p>
+      <div class="lsn-link-row">
+        <input id="lsn-link-input" type="text" readonly>
+        <button class="lsn-copy-btn" onclick="copySafariLink()">Sao chép</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="app">
   <div class="topbar">
     <div class="logo">T&amp;H<span>Spending</span></div>
-    <div class="top-right">
-      <button class="icon-btn" id="topbar-settings-btn" onclick="openSettings()" style="font-size:18px">⚙️</button>
-    </div>
   </div>
 
   <div id="install-banner" class="install-banner" style="display:none">
@@ -421,9 +459,9 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
       </div>
       <div class="nav-label" id="navl-analysis">Phân tích</div>
     </div>
-    <div class="nav-item" onclick="openFriendsPopup()">
-      <div class="nav-icon" id="nav-profile">👤</div>
-      <div class="nav-label" id="navl-profile">Bạn bè</div>
+    <div class="nav-item" onclick="openSettings()">
+      <div class="nav-icon" id="nav-settings" style="font-size:18px">⚙️</div>
+      <div class="nav-label" id="navl-settings">Cài đặt</div>
     </div>
   </div>
 </div>
@@ -476,7 +514,13 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
       <button class="cal-nav-btn" onclick="closeSettings()">✕</button>
     </div>
     <div class="fr-me" id="settings-me"></div>
+    <div class="fr-add-row" id="settings-name-row" style="display:none">
+      <input type="text" id="settings-name-input" placeholder="Nhập tên hiển thị của bạn" maxlength="30">
+      <button onclick="saveDisplayNameFromInput()">Lưu</button>
+    </div>
     <div class="fab-sheet-list" id="settings-list"></div>
+    <div class="fr-section-title">Giao diện</div>
+    <div class="theme-picker-box" id="settings-theme-list"></div>
     <div class="cal-actions">
       <button class="cal-close-btn" style="flex:1;color:#ef4444" onclick="signOutUser()">Đăng xuất</button>
     </div>
@@ -494,6 +538,8 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
   <div class="viewer-dots" id="viewer-dots"></div>
   <div class="viewer-stage" id="viewer-stage">
     <img id="viewer-img" src="" alt="" draggable="false" onpointerdown="viewerPointerDown(event)" onpointermove="viewerPointerMove(event)" onpointerup="viewerPointerUp(event)" onpointercancel="viewerPointerUp(event)">
+    <button class="viewer-nav-btn left" id="viewer-prev-btn" onclick="viewerPrev()">‹</button>
+    <button class="viewer-nav-btn right" id="viewer-next-btn" onclick="viewerNext()">›</button>
     <div class="viewer-zoom-controls">
       <button class="vz-btn" onclick="viewerZoomIn()">＋</button>
       <button class="vz-btn vz-reset" onclick="viewerZoomReset()" id="vz-reset-btn">1×</button>
@@ -532,6 +578,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
       <div class="cal-title" id="ee-title">Thêm chi tiêu</div>
       <button class="cal-nav-btn" onclick="closeExpenseEdit()">✕</button>
     </div>
+    <input id="ee-caption-input" type="text" placeholder="Ghi chú (VD: Ăn trưa, đổ xăng...)" class="mi-note-input" style="margin-bottom:10px">
     <div class="money-fields-row" style="margin-bottom:10px">
       <div class="money-type" id="ee-money-type">
         <button type="button" class="money-type-btn active" data-type="expense" onclick="eeSetMoneyType('expense',this)">Chi</button>
@@ -587,6 +634,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 let photos=[],stream=null,facingMode='environment',currentViewerId=null;
+let toastTimer;
 const STORAGE_KEY='snapday_v2';
 
 // ====== FIREBASE CONFIG — dán config project của bạn vào đây ======
@@ -598,9 +646,15 @@ const firebaseConfig={
   messagingSenderId:"958519005101",
   appId:"1:958519005101:web:596c494b8d563d2dc69b24"
 };
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
+let firebaseOk=true;
+try{
+  firebase.initializeApp(firebaseConfig);
+}catch(e){
+  firebaseOk=false;
+  console.error('Firebase init thất bại — app sẽ chạy ở chế độ chỉ xem ảnh trên máy:',e);
+}
+const auth=firebaseOk?firebase.auth():null;
+const db=firebaseOk?firebase.firestore():null;
 
 let currentUser=null;
 let friendUids=[];
@@ -612,6 +666,47 @@ let reqUnsubIn=null,reqUnsubOutA=null,reqUnsubOutB=null,photosUnsub=null;
 
 function savePhotos(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(photos))}catch(e){}}
 function loadPhotos(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)photos=JSON.parse(r)}catch(e){photos=[]}}
+
+// ====== THEME ======
+const THEME_KEY='th_theme';
+const THEMES={
+  dark:{label:'Đen',desc:'Giao diện gốc: nền tối, nhấn gradient xanh dương - tím',icon:'🌌',metaColor:'#0D0D0F',swatch:['#0d0d0f','#3b82f6','#a855f7']},
+  warm:{label:'Ấm áp',desc:'Nền kem sáng, nhấn cam vàng',icon:'🧡',metaColor:'#FBEEDC',swatch:['#FBEEDC','#F5A623','#FF7A45']},
+  peach:{label:'Hồng đào',desc:'Nền hồng phấn nhạt, nhấn hồng đào dễ thương',icon:'🌸',metaColor:'#FFF0F3',swatch:['#FFF0F3','#FF8FAB','#FFB4A2']}
+};
+function getTheme(){
+  try{const t=localStorage.getItem(THEME_KEY);return THEMES[t]?t:'dark';}catch(e){return 'dark';}
+}
+function applyTheme(theme){
+  const t=THEMES[theme]?theme:'dark';
+  if(t==='dark')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem(THEME_KEY,t);}catch(e){}
+  const metaTheme=document.getElementById('meta-theme-color');
+  if(metaTheme)metaTheme.setAttribute('content',THEMES[t].metaColor);
+}
+function setTheme(theme){
+  if(!THEMES[theme]||theme===getTheme())return;
+  applyTheme(theme);
+  renderSettingsUI();
+  showToast(`${THEMES[theme].icon} Đã chuyển sang giao diện ${THEMES[theme].label}`);
+}
+
+// ====== DISPLAY NAME (tên tự nhập, hiện ở lời chào) ======
+const DISPLAY_NAME_KEY='th_display_name';
+function getDisplayName(){
+  try{return localStorage.getItem(DISPLAY_NAME_KEY)||'';}catch(e){return '';}
+}
+function setDisplayName(name){
+  try{localStorage.setItem(DISPLAY_NAME_KEY,name);}catch(e){}
+}
+function saveDisplayNameFromInput(){
+  const input=document.getElementById('settings-name-input');
+  if(!input)return;
+  setDisplayName(input.value.trim());
+  renderGallery();
+  showToast('✅ Đã lưu tên hiển thị');
+}
 
 // Show install banner on mobile Safari (not standalone)
 window.addEventListener('load',()=>{
@@ -754,12 +849,16 @@ function flipCamera(){
 }
 
 const EXPENSE_CATS=[
-  {id:'an-uong',icon:'🍔',label:'Ăn uống'},
-  {id:'di-chuyen',icon:'🚗',label:'Di chuyển'},
+  {id:'an-uong',icon:'🍙',label:'Ăn uống'},
+  {id:'di-chuyen',icon:'🚕',label:'Di chuyển'},
+  {id:'vat-dung-ca-nhan',icon:'🧴',label:'Vật dụng cá nhân'},
   {id:'mua-sam',icon:'🛍️',label:'Mua sắm'},
+  {id:'xa-giao',icon:'🎉',label:'Xã giao'},
   {id:'hoa-don',icon:'🧾',label:'Hoá đơn'},
-  {id:'giai-tri',icon:'🎮',label:'Giải trí'},
-  {id:'suc-khoe',icon:'💊',label:'Sức khoẻ'},
+  {id:'nha-o',icon:'🏠',label:'Nhà ở'},
+  {id:'giai-tri',icon:'🎬',label:'Giải trí'},
+  {id:'suc-khoe',icon:'🩹',label:'Sức khoẻ'},
+  {id:'giao-duc',icon:'📚',label:'Giáo dục'},
   {id:'vo-hinh',icon:'👻',label:'Chi phí vô hình'},
   {id:'khac',icon:'📦',label:'Khác'}
 ];
@@ -836,6 +935,7 @@ function openExpenseEdit(id){
   eeCategory=p.category||defaultCategoryFor(eeMoneyType,eeCaption);
   eeLocation=p.location||null;
   document.getElementById('ee-title').textContent=p.amount>0?'Sửa chi tiêu':'Thêm chi tiêu';
+  document.getElementById('ee-caption-input').value=eeCaption;
   document.querySelectorAll('#ee-money-type .money-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===eeMoneyType));
   document.getElementById('ee-amount-input').value=p.amount>0?p.amount:'';
   document.getElementById('ee-time-input').value=p.time||toTimeStr(new Date());
@@ -857,10 +957,12 @@ function saveExpenseEdit(){
   const amountRaw=document.getElementById('ee-amount-input').value.replace(/[^\d]/g,'');
   const amount=amountRaw?parseInt(amountRaw,10):0;
   const timeVal=document.getElementById('ee-time-input').value;
+  const captionVal=document.getElementById('ee-caption-input').value.trim();
   p.amount=amount;
   p.moneyType=amount>0?eeMoneyType:null;
   p.category=amount>0?eeCategory:null;
   p.location=amount>0?eeLocation:null;
+  p.caption=captionVal;
   if(timeVal)p.time=timeVal;
   savePhotos();
   closeExpenseEdit();
@@ -870,7 +972,7 @@ function saveExpenseEdit(){
   showToast(amount>0?`Đã lưu chi tiêu! ${p.moneyType==='expense'?'-':'+'}${formatVND(amount)}`:'Đã cập nhật!');
   if(currentUser&&p.cloud){
     db.collection('photos').doc(p.id).update({
-      time:p.time,amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null
+      time:p.time,amount:p.amount||0,moneyType:p.moneyType||null,category:p.category||null,location:p.location||null,caption:p.caption||''
     }).catch(e=>console.error(e));
   }
 }
@@ -1160,7 +1262,7 @@ function renderGallery(){
   <div class="gh-greet-row">
     <div>
       <div class="gh-greet">${greet} ${emoji}</div>
-      <div class="gh-name">${currentUser?(currentUser.displayName||currentUser.email.split('@')[0]):'Bạn'}</div>
+      <div class="gh-name">${currentUser?(currentUser.displayName||currentUser.email.split('@')[0]):(getDisplayName()||'Đặt tên trong Cài đặt')}</div>
     </div>
   </div>
   <div class="gh-status-row">
@@ -1289,7 +1391,7 @@ function calcStreak(){
 let viewerList=[],viewerIndex=0;
 function openViewer(id){
   const p=photos.find(x=>x.id===id);if(!p)return;
-  viewerList=photos.filter(x=>x.date===p.date).sort((a,b)=>a.time.localeCompare(b.time)).map(x=>x.id);
+  viewerList=[...photos].sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date)).map(x=>x.id);
   viewerIndex=viewerList.indexOf(id);
   loadViewerPhoto(id);
   document.getElementById('viewer').classList.add('open');
@@ -1327,6 +1429,7 @@ function loadViewerPhoto(id){
     }
   }
   renderViewerDots();
+  updateViewerNavBtns();
 }
 
 function renderViewerDots(){
@@ -1334,7 +1437,11 @@ function renderViewerDots(){
   if(!el)return;
   if(viewerList.length<=1){el.style.display='none';el.innerHTML='';return;}
   el.style.display='flex';
-  el.innerHTML=viewerList.map((vid,i)=>`<span class="vdot${i===viewerIndex?' active':''}"></span>`).join('');
+  if(viewerList.length>12){
+    el.innerHTML=`<span class="vdot-count">${viewerIndex+1} / ${viewerList.length}</span>`;
+  }else{
+    el.innerHTML=viewerList.map((vid,i)=>`<span class="vdot${i===viewerIndex?' active':''}"></span>`).join('');
+  }
 }
 
 function viewerGoTo(index){
@@ -1344,6 +1451,12 @@ function viewerGoTo(index){
 }
 function viewerNext(){viewerGoTo(viewerIndex+1);}
 function viewerPrev(){viewerGoTo(viewerIndex-1);}
+function updateViewerNavBtns(){
+  const prevBtn=document.getElementById('viewer-prev-btn');
+  const nextBtn=document.getElementById('viewer-next-btn');
+  if(prevBtn)prevBtn.disabled=viewerIndex<=0;
+  if(nextBtn)nextBtn.disabled=viewerIndex>=viewerList.length-1;
+}
 
 function closeViewer(){document.getElementById('viewer').classList.remove('open');currentViewerId=null;viewerList=[];viewerIndex=0;viewerZoomReset();}
 
@@ -1489,11 +1602,8 @@ function getStreakDates(){
 
 function calDayClick(dateStr){
   const dayPhotos=photos.filter(p=>p.date===dateStr);
-  if(dayPhotos.length===1){
-    openViewer(dayPhotos[0].id);
-  }else{
-    selectCalDay(dateStr);
-  }
+  if(dayPhotos.length===0)return;
+  openViewer(dayPhotos[0].id);
 }
 function selectCalDay(dateStr){
   selectedCalDate=selectedCalDate===dateStr?null:dateStr;
@@ -1508,8 +1618,57 @@ function openPhotoFromCal(id){
 function isStandalonePWA(){
   return window.navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches;
 }
+// iOS Safari specifically (window.navigator.standalone only exists there). On iOS, doing the
+// Google/Facebook OAuth redirect *inside* the installed home-screen app is unreliable: WebKit
+// doesn't reliably keep the pending-sign-in state across the trip out to accounts.google.com and
+// back, so the app just lands back on the login screen even though nothing actually went wrong on
+// the user's end. The fix that works: kick the user out to real Safari to sign in there (localStorage,
+// where Firebase keeps the signed-in session, IS shared between Safari and the home-screen app for
+// the same site) — then they just reopen the app from the home screen and they're already signed in.
+function isIOSStandaloneApp(){
+  return window.navigator.standalone===true;
+}
+function openInSafariForSignIn(){
+  showToast('Đang mở Safari để đăng nhập — xong rồi quay lại mở app từ màn hình chính nhé 👋');
+  const url=window.location.origin+window.location.pathname;
+  // window.open() is unreliable at escaping an installed iOS home-screen app: on many iOS
+  // versions it just reloads this SAME url *inside* the standalone container instead of
+  // truly handing off to Safari. Since it's still standalone afterwards, isIOSStandaloneApp()
+  // is still true, so tapping login again just repeats this — which looks like "every tap
+  // just returns to the login screen". A real <a> click is a bit more reliable at breaking
+  // out, but still not guaranteed on every iOS version, so we also reveal on-screen manual
+  // instructions with a copyable link (see initSafariLoginNote) as a fallback that always works.
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+function copySafariLink(){
+  const input=document.getElementById('lsn-link-input');
+  if(!input)return;
+  input.focus();input.select();input.setSelectionRange(0,99999);
+  const done=()=>showToast('Đã sao chép link — mở Safari và dán vào thanh địa chỉ nhé 👆');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(input.value).then(done).catch(()=>{
+      try{document.execCommand('copy');done();}catch(e){showToast('Không sao chép được — hãy tự bôi đen và copy link');}
+    });
+  }else{
+    try{document.execCommand('copy');done();}catch(e){showToast('Không sao chép được — hãy tự bôi đen và copy link');}
+  }
+}
+function initSafariLoginNote(){
+  if(!isIOSStandaloneApp())return;
+  const note=document.getElementById('login-safari-note');
+  const input=document.getElementById('lsn-link-input');
+  if(!note||!input)return;
+  input.value=window.location.origin+window.location.pathname;
+  note.classList.add('show');
+}
 function signInGoogle(){
   const provider=new firebase.auth.GoogleAuthProvider();
+  if(isIOSStandaloneApp()){
+    openInSafariForSignIn();
+    return;
+  }
   // signInWithPopup does not work reliably in an installed (standalone) PWA on iOS/Android —
   // the popup window loses its opener context, so login (and therefore cloud sync) silently fails.
   if(isStandalonePWA()){
@@ -1527,6 +1686,10 @@ function signInGoogle(){
 }
 function signInFacebook(){
   const provider=new firebase.auth.FacebookAuthProvider();
+  if(isIOSStandaloneApp()){
+    openInSafariForSignIn();
+    return;
+  }
   if(isStandalonePWA()){
     auth.signInWithRedirect(provider).catch(e=>{console.error(e);showToast('Đăng nhập thất bại: '+(e.code||e.message));});
     return;
@@ -1541,7 +1704,7 @@ function signInFacebook(){
   });
 }
 // Catch the result of a redirect-based sign-in (needed for the standalone-PWA path above)
-auth.getRedirectResult().catch(e=>{console.error(e);if(e&&e.code)showToast('Đăng nhập thất bại: '+e.code);});
+if(auth)auth.getRedirectResult().catch(e=>{console.error(e);if(e&&e.code)showToast('Đăng nhập thất bại: '+e.code);});
 function signOutUser(){
   auth.signOut();
 }
@@ -1561,23 +1724,24 @@ async function migrateLocalPhotos(){
   showToast('Đã lưu ảnh lên cloud ☁️');
 }
 
-auth.onAuthStateChanged(async user=>{
-  if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
-  if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
-  if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
-  if(photosUnsub){photosUnsub();photosUnsub=null;}
-  currentUser=user;
-  if(!user){
-    document.getElementById('login-screen').classList.remove('hide');
-    friendUids=[];cloudPhotosCache=[];
-    mergePhotos();
-    return;
-  }
-  document.getElementById('login-screen').classList.add('hide');
-  await db.collection('users').doc(user.uid).set({
-    email:(user.email||'').toLowerCase(),
-    displayName:user.displayName||'',
-    photoURL:user.photoURL||'',
+if(auth){
+  auth.onAuthStateChanged(async user=>{
+    if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
+    if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
+    if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
+    if(photosUnsub){photosUnsub();photosUnsub=null;}
+    currentUser=user;
+    if(!user){
+      document.getElementById('login-screen').classList.remove('hide');
+      friendUids=[];cloudPhotosCache=[];
+      mergePhotos();
+      return;
+    }
+    document.getElementById('login-screen').classList.add('hide');
+    await db.collection('users').doc(user.uid).set({
+      email:(user.email||'').toLowerCase(),
+      displayName:user.displayName||'',
+      photoURL:user.photoURL||'',
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   },{merge:true});
   if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
@@ -1586,7 +1750,14 @@ auth.onAuthStateChanged(async user=>{
   migrateLocalPhotos();
   syncMonthlyStatsToCloud();
   closeFriendsPopup();
-});
+  });
+}else{
+  // Firebase failed to load (blocked network, ad-blocker, CDN issue, etc).
+  // Don't leave the person stuck behind the login screen forever — let them
+  // keep using the app with whatever photos are already saved on this device.
+  document.getElementById('login-screen').classList.add('hide');
+  showToast('Không kết nối được máy chủ đăng nhập — bạn vẫn xem được ảnh đã lưu trên máy này.');
+}
 
 // ====== FRIENDS ======
 function pairKey(a,b){return[a,b].sort().join('_');}
@@ -1715,12 +1886,31 @@ function renderSettingsUI(){
   if(meEl){
     meEl.innerHTML=currentUser?`${currentUser.photoURL?`<img src="${currentUser.photoURL}" alt="">`:''}<div class="fr-me-info"><strong>${currentUser.displayName||''}</strong>${currentUser.email}</div>`:'<div class="fr-me-info"><strong>Chưa đăng nhập</strong>Dữ liệu chỉ lưu trên máy này</div>';
   }
+  const nameEl=document.getElementById('settings-name-row');
+  if(nameEl&&!currentUser){
+    nameEl.style.display='';
+    const input=document.getElementById('settings-name-input');
+    if(input&&document.activeElement!==input)input.value=getDisplayName();
+  }else if(nameEl){
+    nameEl.style.display='none';
+  }
   const listEl=document.getElementById('settings-list');
   if(listEl){
+    const current=getTheme();
     listEl.innerHTML=`
       <div class="fab-sheet-item" onclick="closeSettings();exportPhotos()"><div class="fab-sheet-icon" style="background:var(--accent-dim);color:var(--accent)">💾</div><div><strong>Xuất dữ liệu</strong><span>Tải ảnh &amp; giao dịch của bạn về máy (JSON)</span></div></div>
       <div class="fab-sheet-item" onclick="toggleAmountsHidden()"><div class="fab-sheet-icon" style="background:var(--surface2);color:var(--text)">${amountsHidden?'🙈':'👁️'}</div><div><strong>${amountsHidden?'Hiện số tiền':'Ẩn số tiền'}</strong><span>Áp dụng cho Nhật ký, Thống kê, Phân tích</span></div></div>
     `;
+    const themeEl=document.getElementById('settings-theme-list');
+    if(themeEl){
+      themeEl.innerHTML=Object.keys(THEMES).map(id=>{
+        const th=THEMES[id];
+        return`<button class="theme-swatch-btn${id===current?' active':''}" onclick="setTheme('${id}')" title="${th.desc}">
+          <div class="theme-swatch-circle" style="background:linear-gradient(135deg,${th.swatch[1]},${th.swatch[2]})">${id===current?'<span class="theme-swatch-check">✓</span>':''}</div>
+          <div class="theme-swatch-label">${th.icon} ${th.label}</div>
+        </button>`;
+      }).join('');
+    }
   }
 }
 
@@ -2019,7 +2209,6 @@ function closeCatDetail(){
   document.getElementById('catdetail-modal').classList.remove('open');
 }
 
-let toastTimer;
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
@@ -2032,6 +2221,8 @@ document.addEventListener('keydown',(e)=>{
   else if(e.key==='Escape')closeViewer();
 });
 document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(getTheme());
+  initSafariLoginNote();
   loadPhotos();
   localLegacyPhotos=photos.filter(p=>!p.ownerUid);
   updateThumbPreview();
