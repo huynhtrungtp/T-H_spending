@@ -356,7 +356,7 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
   <div class="topbar">
     <div class="logo">T&amp;H<span>Spending</span></div>
     <div class="top-right">
-      <button class="icon-btn" id="topbar-avatar-btn" onclick="openFriendsPopup()" style="width:38px;height:38px;font-size:18px;overflow:hidden;padding:0">👤</button>
+      <button class="icon-btn" id="topbar-settings-btn" onclick="openSettings()" style="font-size:18px">⚙️</button>
     </div>
   </div>
 
@@ -466,8 +466,19 @@ html,body{width:100%;height:100%;background:#0d0d0f;color:var(--text);font-famil
     <div id="fr-incoming"></div>
     <div id="fr-outgoing"></div>
     <div id="fr-list"></div>
+  </div>
+</div>
+
+<div id="settings-modal" class="cal-modal">
+  <div class="cal-sheet">
+    <div class="cal-header">
+      <div class="cal-title">⚙️ Cài đặt</div>
+      <button class="cal-nav-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="fr-me" id="settings-me"></div>
+    <div class="fab-sheet-list" id="settings-list"></div>
     <div class="cal-actions">
-      <button class="cal-close-btn" style="flex:1" onclick="signOutUser()">Đăng xuất</button>
+      <button class="cal-close-btn" style="flex:1;color:#ef4444" onclick="signOutUser()">Đăng xuất</button>
     </div>
   </div>
 </div>
@@ -1123,7 +1134,11 @@ function greetingParts(){
   return['Chào buổi tối','🌙'];
 }
 function setGalleryView(mode){galleryViewMode=mode;renderGallery();}
-function toggleAmountsHidden(){amountsHidden=!amountsHidden;renderGallery();}
+function toggleAmountsHidden(){
+  amountsHidden=!amountsHidden;
+  renderGallery();
+  if(document.getElementById('settings-modal').classList.contains('open'))renderSettingsUI();
+}
 function maskAmount(str){return amountsHidden?'••••••':str;}
 
 function renderGallery(){
@@ -1546,18 +1561,12 @@ async function migrateLocalPhotos(){
   showToast('Đã lưu ảnh lên cloud ☁️');
 }
 
-function renderTopbarAvatar(){
-  const btn=document.getElementById('topbar-avatar-btn');
-  if(!btn)return;
-  btn.innerHTML=(currentUser&&currentUser.photoURL)?`<img src="${currentUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`:'👤';
-}
 auth.onAuthStateChanged(async user=>{
   if(reqUnsubIn){reqUnsubIn();reqUnsubIn=null;}
   if(reqUnsubOutA){reqUnsubOutA();reqUnsubOutA=null;}
   if(reqUnsubOutB){reqUnsubOutB();reqUnsubOutB=null;}
   if(photosUnsub){photosUnsub();photosUnsub=null;}
   currentUser=user;
-  renderTopbarAvatar();
   if(!user){
     document.getElementById('login-screen').classList.remove('hide');
     friendUids=[];cloudPhotosCache=[];
@@ -1698,6 +1707,22 @@ function renderFriendsUI(){
 
 function openFriendsPopup(){document.getElementById('friends-modal').classList.add('open');renderFriendsUI();}
 function closeFriendsPopup(){document.getElementById('friends-modal').classList.remove('open');}
+
+function openSettings(){document.getElementById('settings-modal').classList.add('open');renderSettingsUI();}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function renderSettingsUI(){
+  const meEl=document.getElementById('settings-me');
+  if(meEl){
+    meEl.innerHTML=currentUser?`${currentUser.photoURL?`<img src="${currentUser.photoURL}" alt="">`:''}<div class="fr-me-info"><strong>${currentUser.displayName||''}</strong>${currentUser.email}</div>`:'<div class="fr-me-info"><strong>Chưa đăng nhập</strong>Dữ liệu chỉ lưu trên máy này</div>';
+  }
+  const listEl=document.getElementById('settings-list');
+  if(listEl){
+    listEl.innerHTML=`
+      <div class="fab-sheet-item" onclick="closeSettings();exportPhotos()"><div class="fab-sheet-icon" style="background:var(--accent-dim);color:var(--accent)">💾</div><div><strong>Xuất dữ liệu</strong><span>Tải ảnh &amp; giao dịch của bạn về máy (JSON)</span></div></div>
+      <div class="fab-sheet-item" onclick="toggleAmountsHidden()"><div class="fab-sheet-icon" style="background:var(--surface2);color:var(--text)">${amountsHidden?'🙈':'👁️'}</div><div><strong>${amountsHidden?'Hiện số tiền':'Ẩn số tiền'}</strong><span>Áp dụng cho Nhật ký, Thống kê, Phân tích</span></div></div>
+    `;
+  }
+}
 
 // ====== CLOUD PHOTOS ======
 // Each account only syncs its own photos now — friends are just contacts,
