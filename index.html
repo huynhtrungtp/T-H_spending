@@ -339,6 +339,16 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,35,0.95);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;backdrop-filter:blur(12px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* THEME PICKER */
+.theme-option-list{display:flex;flex-direction:column;gap:8px}
+.theme-option{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:16px;padding:10px 14px;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s}
+.theme-option.active{border-color:var(--accent)}
+.theme-swatch{display:flex;width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08)}
+.theme-swatch span{flex:1;height:100%}
+.theme-option-body{flex:1;min-width:0}
+.theme-option-body strong{display:block;font-size:14px;color:var(--text)}
+.theme-option-body span{display:block;font-size:11.5px;color:var(--text2);margin-top:2px}
+.theme-check{width:20px;text-align:center;font-size:16px;font-weight:700;color:var(--accent);flex-shrink:0}
 /* INSTALL BANNER */
 .install-banner{background:var(--surface);border:0.5px solid var(--accent-dim);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin:10px 14px 0;flex-shrink:0}
 .install-banner .ib-icon{font-size:22px}
@@ -491,6 +501,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </div>
     <div class="fr-me" id="settings-me"></div>
     <div class="fab-sheet-list" id="settings-list"></div>
+    <div class="fr-section-title">Giao diện</div>
+    <div class="theme-option-list" id="settings-theme-list"></div>
     <div class="cal-actions">
       <button class="cal-close-btn" style="flex:1;color:#ef4444" onclick="signOutUser()">Đăng xuất</button>
     </div>
@@ -636,22 +648,26 @@ function loadPhotos(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)photos=
 
 // ====== THEME ======
 const THEME_KEY='th_theme';
+const THEMES={
+  dark:{label:'Xanh - Tím',desc:'Giao diện gốc: nền tối, nhấn gradient xanh dương - tím',icon:'🌌',metaColor:'#0D0D0F',swatch:['#0d0d0f','#3b82f6','#a855f7']},
+  warm:{label:'Ấm áp',desc:'Nền kem sáng, nhấn cam vàng',icon:'🧡',metaColor:'#FBEEDC',swatch:['#FBEEDC','#F5A623','#FF7A45']}
+};
 function getTheme(){
-  try{return localStorage.getItem(THEME_KEY)==='warm'?'warm':'dark';}catch(e){return 'dark';}
+  try{const t=localStorage.getItem(THEME_KEY);return THEMES[t]?t:'dark';}catch(e){return 'dark';}
 }
 function applyTheme(theme){
-  const t=theme==='warm'?'warm':'dark';
-  if(t==='warm')document.documentElement.setAttribute('data-theme','warm');
-  else document.documentElement.removeAttribute('data-theme');
+  const t=THEMES[theme]?theme:'dark';
+  if(t==='dark')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
   try{localStorage.setItem(THEME_KEY,t);}catch(e){}
   const metaTheme=document.getElementById('meta-theme-color');
-  if(metaTheme)metaTheme.setAttribute('content',t==='warm'?'#FBEEDC':'#0D0D0F');
+  if(metaTheme)metaTheme.setAttribute('content',THEMES[t].metaColor);
 }
-function toggleTheme(){
-  const next=getTheme()==='warm'?'dark':'warm';
-  applyTheme(next);
+function setTheme(theme){
+  if(!THEMES[theme]||theme===getTheme())return;
+  applyTheme(theme);
   renderSettingsUI();
-  showToast(next==='warm'?'🧡 Đã chuyển sang giao diện Ấm áp':'🎨 Đã chuyển sang giao diện Tối');
+  showToast(`${THEMES[theme].icon} Đã chuyển sang giao diện ${THEMES[theme].label}`);
 }
 
 // Show install banner on mobile Safari (not standalone)
@@ -1766,11 +1782,22 @@ function renderSettingsUI(){
   }
   const listEl=document.getElementById('settings-list');
   if(listEl){
+    const current=getTheme();
     listEl.innerHTML=`
       <div class="fab-sheet-item" onclick="closeSettings();exportPhotos()"><div class="fab-sheet-icon" style="background:var(--accent-dim);color:var(--accent)">💾</div><div><strong>Xuất dữ liệu</strong><span>Tải ảnh &amp; giao dịch của bạn về máy (JSON)</span></div></div>
       <div class="fab-sheet-item" onclick="toggleAmountsHidden()"><div class="fab-sheet-icon" style="background:var(--surface2);color:var(--text)">${amountsHidden?'🙈':'👁️'}</div><div><strong>${amountsHidden?'Hiện số tiền':'Ẩn số tiền'}</strong><span>Áp dụng cho Nhật ký, Thống kê, Phân tích</span></div></div>
-      <div class="fab-sheet-item" onclick="toggleTheme()"><div class="fab-sheet-icon" style="background:var(--accent-dim);color:var(--accent)">${getTheme()==='warm'?'🧡':'🎨'}</div><div><strong>Giao diện: ${getTheme()==='warm'?'Ấm áp':'Tối'}</strong><span>Chạm để đổi sang ${getTheme()==='warm'?'giao diện Tối':'giao diện Ấm áp'}</span></div></div>
     `;
+    const themeEl=document.getElementById('settings-theme-list');
+    if(themeEl){
+      themeEl.innerHTML=Object.keys(THEMES).map(id=>{
+        const th=THEMES[id];
+        return`<div class="theme-option${id===current?' active':''}" onclick="setTheme('${id}')">
+          <div class="theme-swatch"><span style="background:${th.swatch[0]}"></span><span style="background:${th.swatch[1]}"></span><span style="background:${th.swatch[2]}"></span></div>
+          <div class="theme-option-body"><strong>${th.icon} ${th.label}</strong><span>${th.desc}</span></div>
+          <div class="theme-check">${id===current?'✓':''}</div>
+        </div>`;
+      }).join('');
+    }
   }
 }
 
