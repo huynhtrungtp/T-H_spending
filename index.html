@@ -2037,7 +2037,25 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateThumbPreview();
   switchTab('gallery');
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    let swReg=null;
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      swReg=reg;
+      reg.update().catch(()=>{});
+    }).catch(()=>{});
+    // The service worker itself skips waiting and claims clients as soon as
+    // a new version installs. Once it does, this fires — reload once so the
+    // open page actually runs the new JS instead of staying on the old one.
+    let refreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(refreshing)return;
+      refreshing=true;
+      window.location.reload();
+    });
+    // Re-check for a newer sw.js every time the app is brought back to the
+    // foreground (covers the case of reopening an installed home-screen icon).
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden&&swReg)swReg.update().catch(()=>{});
+    });
   }
 });
 </script>
