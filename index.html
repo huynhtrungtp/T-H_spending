@@ -407,7 +407,6 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
   <div class="screen" id="s-stats"></div>
 
   <button class="fab-add" id="fab-add" onclick="openFabSheet()">+</button>
-  <input type="file" id="device-photo-input" accept="image/*" style="display:none" onchange="handleDevicePhotoSelect(event)">
 
   <div class="bottom-nav">
     <div class="nav-item" onclick="switchTab('gallery')">
@@ -472,7 +471,6 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
     </div>
     <div class="fab-sheet-list">
       <div class="fab-sheet-item" onclick="closeFabSheet();switchTab('camera')"><div class="fab-sheet-icon" style="background:var(--accent-dim);color:var(--accent)">📷</div><div><strong>Chụp ảnh</strong><span>Chụp hoá đơn hoặc khoảnh khắc kèm số tiền</span></div></div>
-      <div class="fab-sheet-item" onclick="closeFabSheet();pickPhotoFromDevice()"><div class="fab-sheet-icon" style="background:rgba(168,85,247,0.16);color:#a855f7">🖼️</div><div><strong>Chọn ảnh từ máy</strong><span>Tải ảnh có sẵn trong thư viện</span></div></div>
       <div class="fab-sheet-item" onclick="closeFabSheet();openManualEntry('income')"><div class="fab-sheet-icon" style="background:rgba(34,197,94,0.16);color:#22c55e">💵</div><div><strong>Thêm thu nhập</strong><span>Lương, thưởng... không cần ảnh</span></div></div>
       <div class="fab-sheet-item" onclick="closeFabSheet();openManualEntry('expense')"><div class="fab-sheet-icon" style="background:rgba(239,68,68,0.16);color:#ef4444">🧾</div><div><strong>Thêm chi tiêu</strong><span>Ghi chi tiêu thủ công không cần ảnh</span></div></div>
     </div>
@@ -1166,47 +1164,6 @@ function capturePhoto(){
   syncMonthlyStatsToCloud();
 }
 
-function pickPhotoFromDevice(){
-  const inp=document.getElementById('device-photo-input');
-  if(inp)inp.click();
-}
-function handleDevicePhotoSelect(event){
-  const file=event.target.files&&event.target.files[0];
-  event.target.value='';
-  if(!file)return;
-  if(!file.type||!file.type.startsWith('image/')){showToast('Vui lòng chọn một tệp ảnh');return;}
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const size=Math.min(img.naturalWidth,img.naturalHeight);
-      const canvas=document.createElement('canvas');
-      canvas.width=size;canvas.height=size;
-      const ctx=canvas.getContext('2d');
-      const xOff=(img.naturalWidth-size)/2;
-      const yOff=(img.naturalHeight-size)/2;
-      ctx.drawImage(img,xOff,yOff,size,size,0,0,size,size);
-      const dataUrl=sizeDataUrlForFirestore(canvas);
-      const now=new Date();
-      const id=Date.now().toString();
-      const photo={id,dataUrl,date:toDateStr(now),time:toTimeStr(now),caption:'',amount:0,moneyType:null,category:null,location:null,ownerUid:currentUser?currentUser.uid:null,ownerName:currentUser?(currentUser.displayName||currentUser.email):null,cloud:false};
-      photos.unshift(photo);
-      savePhotos();
-      updateThumbPreview();
-      if(document.getElementById('s-gallery').classList.contains('active'))renderGallery();
-      showToast('Đã thêm ảnh từ máy 🖼️');
-      if(currentUser)uploadPhotoToCloud(photo);
-      else showToast('Chưa đăng nhập — ảnh chỉ lưu trên máy này');
-      syncMonthlyStatsToCloud();
-      openViewer(id);
-    };
-    img.onerror=()=>showToast('Không đọc được ảnh này');
-    img.src=e.target.result;
-  };
-  reader.onerror=()=>showToast('Không đọc được ảnh này');
-  reader.readAsDataURL(file);
-}
-
 async function uploadPhotoToCloud(photo){
   try{
     // No Cloud Storage (requires the paid Blaze plan) — the compressed photo is
@@ -1648,8 +1605,26 @@ function openPhotoFromCal(id){
 function isStandalonePWA(){
   return window.navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches;
 }
+// iOS Safari specifically (window.navigator.standalone only exists there). On iOS, doing the
+// Google/Facebook OAuth redirect *inside* the installed home-screen app is unreliable: WebKit
+// doesn't reliably keep the pending-sign-in state across the trip out to accounts.google.com and
+// back, so the app just lands back on the login screen even though nothing actually went wrong on
+// the user's end. The fix that works: kick the user out to real Safari to sign in there (localStorage,
+// where Firebase keeps the signed-in session, IS shared between Safari and the home-screen app for
+// the same site) — then they just reopen the app from the home screen and they're already signed in.
+function isIOSStandaloneApp(){
+  return window.navigator.standalone===true;
+}
+function openInSafariForSignIn(){
+  showToast('Đang mở Safari để đăng nhập — xong rồi quay lại mở app từ màn hình chính nhé 👋');
+  window.open(window.location.origin+window.location.pathname,'_blank');
+}
 function signInGoogle(){
   const provider=new firebase.auth.GoogleAuthProvider();
+  if(isIOSStandaloneApp()){
+    openInSafariForSignIn();
+    return;
+  }
   // signInWithPopup does not work reliably in an installed (standalone) PWA on iOS/Android —
   // the popup window loses its opener context, so login (and therefore cloud sync) silently fails.
   if(isStandalonePWA()){
@@ -1667,6 +1642,10 @@ function signInGoogle(){
 }
 function signInFacebook(){
   const provider=new firebase.auth.FacebookAuthProvider();
+  if(isIOSStandaloneApp()){
+    openInSafariForSignIn();
+    return;
+  }
   if(isStandalonePWA()){
     auth.signInWithRedirect(provider).catch(e=>{console.error(e);showToast('Đăng nhập thất bại: '+(e.code||e.message));});
     return;
