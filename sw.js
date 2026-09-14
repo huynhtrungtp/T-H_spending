@@ -1,7 +1,7 @@
 // Bump this every time you deploy a meaningful change — changing the string
 // forces the browser to treat this as a new service worker, which then
 // clears out old caches on activate.
-const CACHE = 'th-spending-v4';
+const CACHE = 'th-spending-v3';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
